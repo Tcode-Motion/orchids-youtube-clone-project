@@ -52,15 +52,15 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
           "flex flex-1 pt-18",
           isStudioPage && "pt-0" // Studio handles its own padding/header
         )}>
-          {/* Sidebar is hidden on shorts and studio page */}
-          {!isShortsPage && !isStudioPage && (
+          {/* Sidebar is hidden on shorts, watch, and studio page */}
+          {!isShortsPage && !isStudioPage && !isWatchPage && (
             <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
           )}
           
           <main className={cn(
             "flex-1 w-full transition-all duration-300",
-            !isShortsPage && !isStudioPage && (sidebarOpen ? "lg:pl-[240px]" : "lg:pl-[72px]"),
-            (isShortsPage || isStudioPage) && "lg:pl-0" 
+            !isShortsPage && !isStudioPage && !isWatchPage && (sidebarOpen ? "lg:pl-[240px]" : "lg:pl-[72px]"),
+            (isShortsPage || isStudioPage || isWatchPage) && "lg:pl-0" 
           )}>
             {children}
           </main>
