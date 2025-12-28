@@ -58,32 +58,56 @@ export default function ChannelPage() {
   const [activeTab, setActiveTab] = useState('videos');
   const [subscribed, setSubscribed] = useState(false);
 
-  useEffect(() => {
-    async function fetchChannel() {
-      const handleSearch = handle.startsWith('@') ? handle : `@${handle}`;
-      
-      const { data: channelData } = await supabase
-        .from('channels')
-        .select('*')
-        .eq('handle', handleSearch)
-        .single();
-
-      if (channelData) {
-        setChannel(channelData);
+    useEffect(() => {
+      async function fetchChannel() {
+        let handleSearch = handle;
         
+        if (handle === 'me') {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user) {
+            const { data: channelData } = await supabase
+              .from('channels')
+              .select('*')
+              .eq('user_id', user.id)
+              .single();
+            if (channelData) {
+              setChannel(channelData);
+              fetchVideos(channelData.id);
+              setLoading(false);
+              return;
+            }
+          }
+          setLoading(false);
+          return;
+        }
+
+        handleSearch = handleSearch.startsWith('@') ? handleSearch : `@${handleSearch}`;
+        
+        const { data: channelData } = await supabase
+          .from('channels')
+          .select('*')
+          .eq('handle', handleSearch)
+          .single();
+
+        if (channelData) {
+          setChannel(channelData);
+          fetchVideos(channelData.id);
+        }
+        setLoading(false);
+      }
+
+      async function fetchVideos(channelId: string) {
         const { data: videosData } = await supabase
           .from('videos')
           .select(`*, channel:channels(*)`)
-          .eq('channel_id', channelData.id)
+          .eq('channel_id', channelId)
           .order('published_at', { ascending: false });
         
         if (videosData) setVideos(videosData as VideoWithChannel[]);
       }
-      setLoading(false);
-    }
 
-    if (handle) fetchChannel();
-  }, [handle]);
+      if (handle) fetchChannel();
+    }, [handle]);
 
   if (loading) {
     return (
