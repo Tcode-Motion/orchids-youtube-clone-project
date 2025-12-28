@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, useEffect, Suspense, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
 import type { Video, Channel, Comment } from '@/lib/supabase/types';
@@ -22,9 +22,14 @@ import {
   Twitter,
   Mail,
   MessageCircle,
-  Check
+  Check,
+  Clock,
+  ListPlus,
+  Flag,
+  Bookmark
 } from 'lucide-react';
 import Link from 'next/link';
+import type { User } from '@supabase/supabase-js';
 
 interface VideoWithChannel extends Video {
   channel: Channel;
@@ -77,6 +82,7 @@ function WatchContent() {
   const searchParams = useSearchParams();
   const videoId = searchParams.get('v');
   
+  const [user, setUser] = useState<User | null>(null);
   const [video, setVideo] = useState<VideoWithChannel | null>(null);
   const [relatedVideos, setRelatedVideos] = useState<VideoWithChannel[]>([]);
   const [comments, setComments] = useState<(Comment & { channel: Channel })[]>([]);
@@ -86,13 +92,50 @@ function WatchContent() {
   const [subscribed, setSubscribed] = useState(false);
   const [commentText, setCommentText] = useState('');
   const [showShareModal, setShowShareModal] = useState(false);
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [copied, setCopied] = useState(false);
   const [submittingComment, setSubmittingComment] = useState(false);
+  const [savedToWatchLater, setSavedToWatchLater] = useState(false);
+  const [userChannel, setUserChannel] = useState<Channel | null>(null);
+
+  const addToHistory = useCallback(async (userId: string, videoId: string) => {
+    const { data: existing } = await supabase
+      .from('watch_history')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('video_id', videoId)
+      .single();
+
+    if (existing) {
+      await supabase
+        .from('watch_history')
+        .update({ watched_at: new Date().toISOString() })
+        .eq('id', existing.id);
+    } else {
+      await supabase
+        .from('watch_history')
+        .insert({ user_id: userId, video_id: videoId, watched_at: new Date().toISOString() });
+    }
+  }, []);
 
   useEffect(() => {
     if (!videoId) return;
 
     async function fetchVideo() {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+
+      if (user) {
+        const { data: channel } = await supabase
+          .from('channels')
+          .select('*')
+          .eq('user_id', user.id)
+          .single();
+        if (channel) setUserChannel(channel);
+
+        addToHistory(user.id, videoId);
+      }
+
       const { data: videoData } = await supabase
         .from('videos')
         .select(`*, channel:channels(*)`)
@@ -101,6 +144,34 @@ function WatchContent() {
 
       if (videoData) {
         setVideo(videoData as VideoWithChannel);
+
+        if (user) {
+          const { data: likeData } = await supabase
+            .from('video_likes')
+            .select('is_like')
+            .eq('user_id', user.id)
+            .eq('video_id', videoId)
+            .single();
+          if (likeData) setLiked(likeData.is_like);
+
+          const { data: watchLaterData } = await supabase
+            .from('watch_later')
+            .select('id')
+            .eq('user_id', user.id)
+            .eq('video_id', videoId)
+            .single();
+          if (watchLaterData) setSavedToWatchLater(true);
+
+          if (videoData.channel) {
+            const { data: subData } = await supabase
+              .from('subscriptions')
+              .select('id')
+              .eq('subscriber_id', user.id)
+              .eq('channel_id', videoData.channel.id)
+              .single();
+            if (subData) setSubscribed(true);
+          }
+        }
         
         const { data: related } = await supabase
           .from('videos')
@@ -124,48 +195,88 @@ function WatchContent() {
     }
 
     fetchVideo();
-  }, [videoId]);
+  }, [videoId, addToHistory]);
 
-    const handleSubmitComment = async () => {
-      if (!commentText.trim() || !videoId) return;
-      setSubmittingComment(true);
+  const handleLike = async (isLike: boolean) => {
+    if (!user || !videoId) return;
+    
+    const newLiked = liked === isLike ? null : isLike;
+    setLiked(newLiked);
 
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        setSubmittingComment(false);
-        return;
-      }
+    if (newLiked === null) {
+      await supabase.from('video_likes').delete().eq('user_id', user.id).eq('video_id', videoId);
+    } else {
+      await supabase.from('video_likes').upsert({
+        user_id: user.id,
+        video_id: videoId,
+        is_like: newLiked,
+        created_at: new Date().toISOString()
+      }, { onConflict: 'user_id,video_id' });
+    }
+  };
 
-      const { data: channelData } = await supabase
-        .from('channels')
-        .select('id')
-        .eq('user_id', user.id)
-        .single();
+  const handleSubscribe = async () => {
+    if (!user || !video?.channel) return;
+    
+    const newSubscribed = !subscribed;
+    setSubscribed(newSubscribed);
 
-      const channelId = channelData?.id;
+    if (newSubscribed) {
+      await supabase.from('subscriptions').insert({
+        subscriber_id: user.id,
+        channel_id: video.channel.id,
+        created_at: new Date().toISOString()
+      });
+    } else {
+      await supabase.from('subscriptions').delete()
+        .eq('subscriber_id', user.id)
+        .eq('channel_id', video.channel.id);
+    }
+  };
 
-      if (channelId) {
-        const { data: newComment } = await supabase
-          .from('comments')
-          .insert({
-            video_id: videoId,
-            channel_id: channelId,
-            content: commentText.trim(),
-            like_count: 0
-          })
-          .select(`*, channel:channels(*)`)
-          .single();
+  const handleSaveToWatchLater = async () => {
+    if (!user || !videoId) return;
+    
+    if (savedToWatchLater) {
+      await supabase.from('watch_later').delete().eq('user_id', user.id).eq('video_id', videoId);
+      setSavedToWatchLater(false);
+    } else {
+      await supabase.from('watch_later').insert({
+        user_id: user.id,
+        video_id: videoId,
+        created_at: new Date().toISOString()
+      });
+      setSavedToWatchLater(true);
+    }
+    setShowMoreMenu(false);
+  };
 
-        if (newComment) {
-          setComments([newComment as (Comment & { channel: Channel }), ...comments]);
-          setCommentText('');
-        }
-      } else {
-        // Prompt to create channel
-        alert('You need to create a channel to comment.');
-      }
+  const handleSubmitComment = async () => {
+    if (!commentText.trim() || !videoId || !user) return;
+    setSubmittingComment(true);
+
+    if (!userChannel) {
       setSubmittingComment(false);
-    };
+      return;
+    }
+
+    const { data: newComment } = await supabase
+      .from('comments')
+      .insert({
+        video_id: videoId,
+        channel_id: userChannel.id,
+        content: commentText.trim(),
+        like_count: 0
+      })
+      .select(`*, channel:channels(*)`)
+      .single();
+
+    if (newComment) {
+      setComments([newComment as (Comment & { channel: Channel }), ...comments]);
+      setCommentText('');
+    }
+    setSubmittingComment(false);
+  };
 
   const handleDownload = () => {
     if (video?.video_url) {
@@ -216,32 +327,15 @@ function WatchContent() {
     );
   }
 
-    const videoUrl = video.video_url || 'https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4';
-    
-    // Check if it's a YouTube URL
-    const getYouTubeId = (url: string) => {
-      const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-      const match = url.match(regExp);
-      return (match && match[2].length === 11) ? match[2] : null;
-    };
+  const videoUrl = video.video_url || 'https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4';
 
-    const youtubeId = getYouTubeId(videoUrl);
-
-    return (
-      <div className="flex flex-col min-h-screen bg-[#f9f9f9]">
-        <Masthead />
-        <div className="pt-[56px] flex flex-col lg:flex-row gap-6 p-4 lg:p-6 max-w-[1800px] mx-auto w-full">
-          <div className="flex-1 max-w-[1280px]">
-            <div className="relative aspect-video bg-black rounded-xl overflow-hidden">
-              {youtubeId ? (
-                <iframe
-                  src={`https://www.youtube.com/embed/${youtubeId}?autoplay=1`}
-                  title={video.title}
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                  className="w-full h-full border-0"
-                />
-              ) : video.is_live ? (
+  return (
+    <div className="flex flex-col min-h-screen bg-[#f9f9f9]">
+      <Masthead />
+      <div className="pt-[56px] flex flex-col lg:flex-row gap-6 p-4 lg:p-6 max-w-[1800px] mx-auto w-full">
+        <div className="flex-1 max-w-[1280px]">
+          <div className="relative aspect-video bg-black rounded-xl overflow-hidden">
+            {video.is_live ? (
               <div className="relative w-full h-full">
                 <video
                   src={videoUrl}
@@ -277,7 +371,7 @@ function WatchContent() {
 
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-3 pb-4 border-b border-[#e5e5e5]">
             <div className="flex items-center gap-3">
-              <Link href={`/channel/${video.channel?.handle}`}>
+              <Link href={`/channel/${video.channel?.handle?.replace('@', '')}`}>
                 <img 
                   src={video.channel?.avatar_url || 'https://picsum.photos/seed/default/40/40'}
                   alt={video.channel?.name}
@@ -286,7 +380,7 @@ function WatchContent() {
               </Link>
               <div className="flex flex-col">
                 <div className="flex items-center gap-1">
-                  <Link href={`/channel/${video.channel?.handle}`} className="font-medium text-[#0f0f0f] hover:underline">
+                  <Link href={`/channel/${video.channel?.handle?.replace('@', '')}`} className="font-medium text-[#0f0f0f] hover:underline">
                     {video.channel?.name}
                   </Link>
                   {video.channel?.is_verified && (
@@ -298,7 +392,7 @@ function WatchContent() {
                 </span>
               </div>
               <button 
-                onClick={() => setSubscribed(!subscribed)}
+                onClick={user ? handleSubscribe : () => {}}
                 className={`ml-4 px-4 py-2 rounded-full font-medium text-sm flex items-center gap-2 transition-colors ${
                   subscribed 
                     ? 'bg-[#f2f2f2] text-[#0f0f0f] hover:bg-[#e5e5e5]' 
@@ -313,14 +407,14 @@ function WatchContent() {
             <div className="flex items-center gap-2 flex-wrap">
               <div className="flex items-center bg-[#f2f2f2] rounded-full overflow-hidden">
                 <button 
-                  onClick={() => setLiked(liked === true ? null : true)}
+                  onClick={() => handleLike(true)}
                   className={`flex items-center gap-2 px-4 py-2 hover:bg-[#e5e5e5] transition-colors border-r border-[#ccc] ${liked === true ? 'text-[#065fd4]' : ''}`}
                 >
                   <ThumbsUp size={20} fill={liked === true ? 'currentColor' : 'none'} />
                   <span className="font-medium text-sm">{formatViews(video.like_count + (liked === true ? 1 : 0))}</span>
                 </button>
                 <button 
-                  onClick={() => setLiked(liked === false ? null : false)}
+                  onClick={() => handleLike(false)}
                   className={`flex items-center px-4 py-2 hover:bg-[#e5e5e5] transition-colors ${liked === false ? 'text-[#065fd4]' : ''}`}
                 >
                   <ThumbsDown size={20} fill={liked === false ? 'currentColor' : 'none'} />
@@ -340,9 +434,33 @@ function WatchContent() {
                 <Download size={20} />
                 <span className="font-medium text-sm">Download</span>
               </button>
-              <button className="p-2 bg-[#f2f2f2] rounded-full hover:bg-[#e5e5e5] transition-colors">
-                <MoreHorizontal size={20} />
-              </button>
+              <div className="relative">
+                <button 
+                  onClick={() => setShowMoreMenu(!showMoreMenu)}
+                  className="p-2 bg-[#f2f2f2] rounded-full hover:bg-[#e5e5e5] transition-colors"
+                >
+                  <MoreHorizontal size={20} />
+                </button>
+                {showMoreMenu && (
+                  <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-xl shadow-lg border border-[#e5e5e5] py-2 z-50">
+                    <button 
+                      onClick={handleSaveToWatchLater}
+                      className="flex items-center gap-3 w-full px-4 py-2 hover:bg-[#f2f2f2] text-left"
+                    >
+                      <Clock size={20} />
+                      <span className="text-sm">{savedToWatchLater ? 'Remove from Watch later' : 'Save to Watch later'}</span>
+                    </button>
+                    <button className="flex items-center gap-3 w-full px-4 py-2 hover:bg-[#f2f2f2] text-left">
+                      <ListPlus size={20} />
+                      <span className="text-sm">Save to playlist</span>
+                    </button>
+                    <button className="flex items-center gap-3 w-full px-4 py-2 hover:bg-[#f2f2f2] text-left">
+                      <Flag size={20} />
+                      <span className="text-sm">Report</span>
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
@@ -377,16 +495,17 @@ function WatchContent() {
             </div>
 
             <div className="flex gap-4 mb-6">
-              <div className="w-10 h-10 bg-[#ef4444] rounded-full flex items-center justify-center text-white font-medium">
-                G
+              <div className="w-10 h-10 bg-[#ef4444] rounded-full flex items-center justify-center text-white font-medium shrink-0">
+                {user?.email?.charAt(0).toUpperCase() || 'G'}
               </div>
               <div className="flex-1">
                 <input
                   type="text"
                   value={commentText}
                   onChange={(e) => setCommentText(e.target.value)}
-                  placeholder="Add a comment..."
-                  className="w-full bg-transparent border-b border-[#e5e5e5] focus:border-[#0f0f0f] outline-none pb-2 text-sm"
+                  placeholder={user ? "Add a comment..." : "Sign in to comment"}
+                  disabled={!user}
+                  className="w-full bg-transparent border-b border-[#e5e5e5] focus:border-[#0f0f0f] outline-none pb-2 text-sm disabled:cursor-not-allowed"
                   onKeyDown={(e) => e.key === 'Enter' && handleSubmitComment()}
                 />
                 {commentText && (
@@ -399,7 +518,7 @@ function WatchContent() {
                     </button>
                     <button 
                       onClick={handleSubmitComment}
-                      disabled={submittingComment}
+                      disabled={submittingComment || !userChannel}
                       className="px-4 py-2 text-sm font-medium bg-[#065fd4] text-white rounded-full hover:bg-[#0556be] disabled:opacity-50"
                     >
                       {submittingComment ? 'Posting...' : 'Comment'}
@@ -413,16 +532,16 @@ function WatchContent() {
               {comments.length === 0 ? (
                 <p className="text-[#606060] text-sm italic">No comments yet. Be the first to comment!</p>
               ) : (
-                comments.map((comment, i) => (
+                comments.map((comment) => (
                   <div key={comment.id} className="flex gap-4">
                     <img 
-                      src={comment.channel?.avatar_url || `https://picsum.photos/seed/user${i}/40/40`}
+                      src={comment.channel?.avatar_url || 'https://picsum.photos/seed/user/40/40'}
                       alt={comment.channel?.name || 'User'}
-                      className="w-10 h-10 rounded-full"
+                      className="w-10 h-10 rounded-full shrink-0"
                     />
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium">{comment.channel?.handle || `@user${i+1}`}</span>
+                        <span className="text-sm font-medium">{comment.channel?.handle || '@user'}</span>
                         <span className="text-xs text-[#606060]">{timeAgo(comment.created_at || new Date().toISOString())}</span>
                       </div>
                       <p className="text-sm mt-1 whitespace-pre-wrap">

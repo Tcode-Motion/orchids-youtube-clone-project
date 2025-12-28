@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import Link from 'next/link';
-import { TrendingUp, CheckCircle2, Flame, Music, Gamepad2, Film, Trophy } from 'lucide-react';
+import { TrendingUp, CheckCircle2, Flame, Music, Gamepad2, Film, Trophy, Newspaper, GraduationCap } from 'lucide-react';
 import LayoutWrapper from '@/components/sections/layout-wrapper';
 
 interface Video {
@@ -16,6 +16,7 @@ interface Video {
   like_count: number;
   published_at: string;
   is_live: boolean;
+  category_id: string;
   channel: {
     id: string;
     name: string;
@@ -23,6 +24,11 @@ interface Video {
     avatar_url: string;
     is_verified: boolean;
   };
+}
+
+interface Category {
+  id: string;
+  name: string;
 }
 
 function formatViews(count: number): string {
@@ -53,35 +59,67 @@ function timeAgo(date: string): string {
   return `${Math.floor(diffInSeconds / 31536000)} years ago`;
 }
 
-const categories = [
-  { id: 'now', label: 'Now', icon: Flame },
-  { id: 'music', label: 'Music', icon: Music },
-  { id: 'gaming', label: 'Gaming', icon: Gamepad2 },
-  { id: 'movies', label: 'Movies', icon: Film },
-  { id: 'sports', label: 'Sports', icon: Trophy },
-];
+const categoryIcons: Record<string, React.ElementType> = {
+  'now': Flame,
+  'Music': Music,
+  'Gaming': Gamepad2,
+  'Movies': Film,
+  'Sports': Trophy,
+  'News': Newspaper,
+  'Learning': GraduationCap,
+};
 
 export default function TrendingPage() {
   const [videos, setVideos] = useState<Video[]>([]);
+  const [allVideos, setAllVideos] = useState<Video[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState('now');
 
   useEffect(() => {
-    async function fetchTrendingVideos() {
-      const { data } = await supabase
-        .from('videos')
-        .select(`*, channel:channels(*)`)
-        .eq('is_short', false)
-        .order('view_count', { ascending: false })
-        .limit(50);
+    async function fetchData() {
+      const [videosRes, categoriesRes] = await Promise.all([
+        supabase
+          .from('videos')
+          .select(`*, channel:channels(*)`)
+          .eq('is_short', false)
+          .order('view_count', { ascending: false })
+          .limit(50),
+        supabase.from('categories').select('*')
+      ]);
 
-      if (data) {
-        setVideos(data as Video[]);
+      if (videosRes.data) {
+        setAllVideos(videosRes.data as Video[]);
+        setVideos(videosRes.data as Video[]);
+      }
+      if (categoriesRes.data) {
+        setCategories(categoriesRes.data);
       }
       setLoading(false);
     }
-    fetchTrendingVideos();
+    fetchData();
   }, []);
+
+  useEffect(() => {
+    if (activeCategory === 'now') {
+      setVideos(allVideos);
+    } else {
+      const category = categories.find(c => c.name === activeCategory);
+      if (category) {
+        setVideos(allVideos.filter(v => v.category_id === category.id));
+      }
+    }
+  }, [activeCategory, allVideos, categories]);
+
+  const categoryButtons = [
+    { id: 'now', label: 'Now' },
+    { id: 'Music', label: 'Music' },
+    { id: 'Gaming', label: 'Gaming' },
+    { id: 'Movies', label: 'Movies' },
+    { id: 'Sports', label: 'Sports' },
+    { id: 'News', label: 'News' },
+    { id: 'Learning', label: 'Learning' },
+  ];
 
   if (loading) {
     return (
@@ -124,70 +162,83 @@ export default function TrendingPage() {
           </div>
 
           <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
-            {categories.map((cat) => (
-              <button
-                key={cat.id}
-                onClick={() => setActiveCategory(cat.id)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-full whitespace-nowrap text-sm font-medium transition-colors ${
-                  activeCategory === cat.id
-                    ? 'bg-[#0f0f0f] text-white'
-                    : 'bg-[#f2f2f2] text-[#0f0f0f] hover:bg-[#e5e5e5]'
-                }`}
-              >
-                <cat.icon size={18} />
-                {cat.label}
-              </button>
-            ))}
+            {categoryButtons.map((cat) => {
+              const IconComponent = categoryIcons[cat.id] || Flame;
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() => setActiveCategory(cat.id)}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-full whitespace-nowrap text-sm font-medium transition-colors ${
+                    activeCategory === cat.id
+                      ? 'bg-[#0f0f0f] text-white'
+                      : 'bg-[#f2f2f2] text-[#0f0f0f] hover:bg-[#e5e5e5]'
+                  }`}
+                >
+                  <IconComponent size={18} />
+                  {cat.label}
+                </button>
+              );
+            })}
           </div>
 
-          <div className="space-y-4">
-            {videos.map((video, index) => (
-              <Link 
-                key={video.id}
-                href={`/watch?v=${video.id}`}
-                className="flex gap-4 group bg-white rounded-xl p-3 hover:shadow-md transition-shadow"
-              >
-                <div className="flex items-center justify-center w-8 text-2xl font-bold text-[#606060]">
-                  {index + 1}
-                </div>
-                <div className="relative w-64 h-36 rounded-xl overflow-hidden bg-gray-200 shrink-0">
-                  <img
-                    src={video.thumbnail_url || 'https://picsum.photos/seed/default/256/144'}
-                    alt={video.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                  />
-                  {video.is_live ? (
-                    <span className="absolute bottom-2 left-2 bg-[#cc0000] text-white text-xs font-medium px-1.5 py-0.5 rounded">
-                      LIVE
-                    </span>
-                  ) : (
-                    <span className="absolute bottom-2 right-2 bg-black/80 text-white text-xs font-medium px-1.5 py-0.5 rounded">
-                      {formatDuration(video.duration)}
-                    </span>
-                  )}
-                </div>
-                <div className="flex-1 min-w-0 py-1">
-                  <h3 className="font-semibold text-[#0f0f0f] line-clamp-2 mb-2 group-hover:text-[#065fd4]">
-                    {video.title}
-                  </h3>
-                  <div className="flex items-center gap-1 text-sm text-[#606060] mb-1">
-                    <span>{video.channel?.name}</span>
-                    {video.channel?.is_verified && (
-                      <CheckCircle2 size={14} className="text-[#606060]" />
+          {videos.length === 0 ? (
+            <div className="text-center py-16">
+              <div className="w-24 h-24 bg-[#f2f2f2] rounded-full flex items-center justify-center mx-auto mb-4">
+                <TrendingUp size={48} className="text-[#606060]" />
+              </div>
+              <h2 className="text-xl font-semibold mb-2">No trending videos in this category</h2>
+              <p className="text-[#606060]">Check other categories for trending content</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {videos.map((video, index) => (
+                <Link 
+                  key={video.id}
+                  href={`/watch?v=${video.id}`}
+                  className="flex gap-4 group bg-white rounded-xl p-3 hover:shadow-md transition-shadow"
+                >
+                  <div className="flex items-center justify-center w-8 text-2xl font-bold text-[#606060]">
+                    {index + 1}
+                  </div>
+                  <div className="relative w-64 h-36 rounded-xl overflow-hidden bg-gray-200 shrink-0">
+                    <img
+                      src={video.thumbnail_url || 'https://picsum.photos/seed/default/256/144'}
+                      alt={video.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                    />
+                    {video.is_live ? (
+                      <span className="absolute bottom-2 left-2 bg-[#cc0000] text-white text-xs font-medium px-1.5 py-0.5 rounded">
+                        LIVE
+                      </span>
+                    ) : (
+                      <span className="absolute bottom-2 right-2 bg-black/80 text-white text-xs font-medium px-1.5 py-0.5 rounded">
+                        {formatDuration(video.duration)}
+                      </span>
                     )}
                   </div>
-                  <div className="text-sm text-[#606060]">
-                    {formatViews(video.view_count)} views &middot; {timeAgo(video.published_at)}
+                  <div className="flex-1 min-w-0 py-1">
+                    <h3 className="font-semibold text-[#0f0f0f] line-clamp-2 mb-2 group-hover:text-[#065fd4]">
+                      {video.title}
+                    </h3>
+                    <div className="flex items-center gap-1 text-sm text-[#606060] mb-1">
+                      <span>{video.channel?.name}</span>
+                      {video.channel?.is_verified && (
+                        <CheckCircle2 size={14} className="text-[#606060]" />
+                      )}
+                    </div>
+                    <div className="text-sm text-[#606060]">
+                      {formatViews(video.view_count)} views &middot; {timeAgo(video.published_at)}
+                    </div>
+                    {video.description && (
+                      <p className="text-xs text-[#606060] line-clamp-1 mt-2">
+                        {video.description}
+                      </p>
+                    )}
                   </div>
-                  {video.description && (
-                    <p className="text-xs text-[#606060] line-clamp-1 mt-2">
-                      {video.description}
-                    </p>
-                  )}
-                </div>
-              </Link>
-            ))}
-          </div>
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
       </main>
     </LayoutWrapper>
