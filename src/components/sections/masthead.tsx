@@ -320,24 +320,34 @@ const Masthead: React.FC<MastheadProps> = ({ onMenuClick }) => {
                           <p className="text-sm text-[#606060] truncate">{user.email}</p>
                         </div>
                       </div>
-                      {hasChannel ? (
-                        <Link href="/channel/me" onClick={() => setShowUserMenu(false)} className="text-sm text-[#065fd4] hover:underline mt-2 block">
-                          View your channel
-                        </Link>
-                      ) : (
-                        <button 
-                          onClick={() => { setShowCreateChannelModal(true); setShowUserMenu(false); }}
-                          className="text-sm text-[#065fd4] hover:underline mt-2 block"
-                        >
-                          Create a channel
-                        </button>
-                      )}
-                    </div>
-                    <div className="py-1">
-                      <Link href="/account" onClick={() => setShowUserMenu(false)} className="flex items-center gap-4 px-4 py-2.5 hover:bg-[#f2f2f2]">
-                        <User size={20} />
-                        <span className="text-sm">Your channel</span>
-                      </Link>
+                        {hasChannel ? (
+                          <Link href={`/channel/${channelHandle?.replace('@', '')}`} onClick={() => setShowUserMenu(false)} className="text-sm text-[#065fd4] hover:underline mt-2 block">
+                            View your channel
+                          </Link>
+                        ) : (
+                          <button 
+                            onClick={() => { setShowCreateChannelModal(true); setShowUserMenu(false); }}
+                            className="text-sm text-[#065fd4] hover:underline mt-2 block"
+                          >
+                            Create a channel
+                          </button>
+                        )}
+                      </div>
+                      <div className="py-1">
+                        {hasChannel ? (
+                          <Link href={`/channel/${channelHandle?.replace('@', '')}`} onClick={() => setShowUserMenu(false)} className="flex items-center gap-4 px-4 py-2.5 hover:bg-[#f2f2f2]">
+                            <User size={20} />
+                            <span className="text-sm">Your channel</span>
+                          </Link>
+                        ) : (
+                          <button 
+                            onClick={() => { setShowCreateChannelModal(true); setShowUserMenu(false); }}
+                            className="flex items-center gap-4 px-4 py-2.5 hover:bg-[#f2f2f2] w-full text-left"
+                          >
+                            <User size={20} />
+                            <span className="text-sm">Create a channel</span>
+                          </button>
+                        )}
                       <Link href="/purchases" onClick={() => setShowUserMenu(false)} className="flex items-center gap-4 px-4 py-2.5 hover:bg-[#f2f2f2]">
                         <DollarSign size={20} />
                         <span className="text-sm">Purchases and memberships</span>
