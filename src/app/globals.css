@@ -69,8 +69,9 @@
   }
 
   body {
-    @apply bg-background text-foreground selection:bg-primary/30;
-    font-family: "Plus Jakarta Sans", sans-serif;
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
     overflow-x: hidden;
   }
 
@@ -96,31 +97,61 @@
 
 @layer components {
   .glass {
-    @apply bg-opacity-60 backdrop-blur-xl border border-white/5;
+    background-color: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
   }
   
   .glass-card {
-    @apply bg-card/60 backdrop-blur-md border border-white/5 rounded-3xl transition-all duration-300;
+    background-color: rgba(12, 12, 14, 0.6);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 1.5rem;
+    transition: all 0.3s ease;
   }
 
   .neon-glow {
-    box-shadow: 0 0 20px -5px rgba(99, 102, 241, 0.5);
-  }
-
-  .neon-text {
-    @apply text-primary drop-shadow-[0_0_8px_rgba(99,102,241,0.5)];
+    box-shadow: 0 0 20px -5px rgba(99, 102, 241, 0.4);
   }
 
   .sidebar-floating {
-    @apply fixed top-6 left-6 bottom-6 w-20 glass rounded-3xl z-50 flex flex-col items-center py-8 transition-all duration-500 hover:w-64 group;
+    position: fixed;
+    top: 1.5rem;
+    left: 1.5rem;
+    bottom: 1.5rem;
+    width: 5rem;
+    z-index: 50;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .sidebar-floating:hover {
+    width: 16rem;
   }
 
   .main-content-fluid {
-    @apply mt-28 ml-32 mr-8 transition-all duration-500;
+    margin-top: 7rem;
+    margin-left: 8rem;
+    margin-right: 2rem;
+    transition: all 0.5s ease;
   }
 
   .video-card-cyber {
-    @apply relative group overflow-hidden rounded-2xl bg-[#0c0c0e] border border-white/5 hover:border-primary/50 transition-all duration-500;
+    position: relative;
+    overflow: hidden;
+    border-radius: 1rem;
+    background-color: #0c0c0e;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: all 0.5s ease;
+  }
+  
+  .video-card-cyber:hover {
+    border-color: rgba(99, 102, 241, 0.5);
+    transform: translateY(-4px);
   }
 }
 
