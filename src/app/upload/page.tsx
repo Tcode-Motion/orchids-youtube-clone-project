@@ -12,12 +12,15 @@ import {
   Globe, 
   Lock, 
   Users,
-  ChevronDown,
   Check,
   Loader2,
-  AlertCircle
+  Sparkles,
+  Zap,
+  Play,
+  ArrowRight
 } from 'lucide-react';
 import type { User } from '@supabase/supabase-js';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface Category {
   id: string;
@@ -37,6 +40,7 @@ export default function UploadPage() {
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
   const [thumbnailPreview, setThumbnailPreview] = useState<string>('');
   const [videoPreview, setVideoPreview] = useState<string>('');
+  const [error, setError] = useState<string | null>(null);
   
   const [formData, setFormData] = useState({
     title: '',
@@ -92,59 +96,65 @@ export default function UploadPage() {
     
     setUploading(true);
     setUploadProgress(0);
+    setError(null);
 
     try {
-      let channel_id = '11111111-1111-1111-1111-111111111101';
+      let channel_id;
       
-      if (user) {
-        const { data: channel } = await supabase
+      if (!user) throw new Error("Auth required");
+
+      const { data: channel } = await supabase
+        .from('channels')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+      
+      if (channel) {
+        channel_id = channel.id;
+      } else {
+        const { data: newChannel, error: channelErr } = await supabase
           .from('channels')
-          .select('id')
-          .eq('user_id', user.id)
+          .insert({
+            user_id: user.id,
+            name: user.user_metadata?.name || user.email?.split('@')[0] || 'Creator',
+            handle: `@${user.email?.split('@')[0] || 'creator'}${Date.now()}`,
+            description: 'New channel on VidStream',
+            subscriber_count: 0,
+            video_count: 0,
+            is_verified: false,
+          })
+          .select()
           .single();
         
-        if (channel) {
-          channel_id = channel.id;
-        } else {
-          const { data: newChannel } = await supabase
-            .from('channels')
-            .insert({
-              user_id: user.id,
-              name: user.user_metadata?.name || user.email?.split('@')[0] || 'Creator',
-              handle: `@${user.email?.split('@')[0] || 'creator'}${Date.now()}`,
-              description: 'Welcome to my channel!',
-              subscriber_count: 0,
-              video_count: 0,
-              is_verified: false,
-            })
-            .select()
-            .single();
-          
-          if (newChannel) channel_id = newChannel.id;
-        }
+        if (channelErr) throw channelErr;
+        channel_id = newChannel.id;
       }
 
-      setUploadProgress(20);
+      setUploadProgress(10);
 
-      let video_url = 'https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4';
-      let thumbnail_url = 'https://i.ytimg.com/vi/0e3GPea1Tyg/maxresdefault.jpg';
+      let video_url = '';
+      let thumbnail_url = 'https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?q=80&w=1074&auto=format&fit=crop';
 
-      const videoPath = `videos/${Date.now()}_${videoFile.name}`;
+      // 1. Upload Video
+      const videoPath = `videos/${Date.now()}_${videoFile.name.replace(/\s/g, '_')}`;
       const { data: videoUpload, error: videoError } = await supabase.storage
         .from('videos')
         .upload(videoPath, videoFile);
 
-      if (!videoError && videoUpload) {
+      if (videoError) throw new Error(`Video upload failed: ${videoError.message}`);
+      
+      if (videoUpload) {
         const { data: { publicUrl } } = supabase.storage
           .from('videos')
           .getPublicUrl(videoPath);
         video_url = publicUrl;
       }
 
-      setUploadProgress(60);
+      setUploadProgress(50);
 
+      // 2. Upload Thumbnail
       if (thumbnailFile) {
-        const thumbPath = `thumbnails/${Date.now()}_${thumbnailFile.name}`;
+        const thumbPath = `thumbnails/${Date.now()}_${thumbnailFile.name.replace(/\s/g, '_')}`;
         const { data: thumbUpload, error: thumbError } = await supabase.storage
           .from('thumbnails')
           .upload(thumbPath, thumbnailFile);
@@ -159,16 +169,16 @@ export default function UploadPage() {
 
       setUploadProgress(80);
 
-      const video = document.createElement('video');
-      video.src = videoPreview;
-      
+      // 3. Get metadata
+      const videoEl = document.createElement('video');
+      videoEl.src = videoPreview;
       await new Promise<void>((resolve) => {
-        video.onloadedmetadata = () => resolve();
-        video.onerror = () => resolve();
+        videoEl.onloadedmetadata = () => resolve();
+        videoEl.onerror = () => resolve();
       });
+      const duration = Math.floor(videoEl.duration) || 0;
 
-      const duration = Math.floor(video.duration) || 300;
-
+      // 4. Insert DB record
       const { data: newVideo, error: insertError } = await supabase
         .from('videos')
         .insert({
@@ -190,260 +200,257 @@ export default function UploadPage() {
         .select()
         .single();
 
-      setUploadProgress(100);
-
       if (insertError) throw insertError;
 
+      setUploadProgress(100);
       setTimeout(() => {
         router.push(`/watch?v=${newVideo.id}`);
-      }, 500);
+      }, 800);
 
-    } catch (error) {
-      console.error('Upload error:', error);
+    } catch (err: any) {
+      console.error('Transmission failed:', err);
+      setError(err.message || 'System error during transmission');
       setUploading(false);
     }
   };
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-[#f9f9f9]">
+      <div className="min-h-screen bg-[#050505]">
         <Masthead />
-        <div className="pt-[56px] flex items-center justify-center min-h-[calc(100vh-56px)]">
-          <div className="text-center p-8 max-w-md">
-            <div className="w-20 h-20 bg-[#f2f2f2] rounded-full flex items-center justify-center mx-auto mb-6">
-              <Upload size={40} className="text-[#606060]" />
+        <div className="pt-18 flex items-center justify-center min-h-[calc(100vh-72px)] px-6">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="text-center p-12 bg-white/5 border border-white/10 rounded-[40px] max-w-md w-full backdrop-blur-xl shadow-2xl relative overflow-hidden"
+          >
+            <div className="absolute -top-20 -right-20 w-40 h-40 bg-indigo-500/20 blur-[80px]" />
+            <div className="w-24 h-24 bg-indigo-500/10 rounded-[32px] flex items-center justify-center mx-auto mb-8 text-indigo-500 shadow-inner">
+              <Upload size={48} />
             </div>
-            <h1 className="text-2xl font-semibold mb-2">Sign in to upload</h1>
-            <p className="text-[#606060] mb-6">Create and share videos with the VidStream community</p>
+            <h1 className="text-3xl font-extrabold text-white mb-4">Neural Uplink</h1>
+            <p className="text-white/40 mb-10 leading-relaxed">Authorization required to establish a broadcast signal. Please authenticate to continue.</p>
             <button 
               onClick={() => router.push('/auth')}
-              className="px-6 py-3 bg-[#065fd4] text-white rounded-full font-medium hover:bg-[#0556be] transition-colors"
+              className="w-full h-14 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-2xl shadow-lg shadow-indigo-500/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
             >
-              Sign in
+              Sign In to VidStream
             </button>
-          </div>
+          </motion.div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#f9f9f9]">
+    <div className="min-h-screen bg-[#050505] text-white">
       <Masthead />
-      <div className="pt-[56px]">
-        <div className="max-w-4xl mx-auto p-6">
-          <h1 className="text-2xl font-semibold mb-6">Upload video</h1>
+      <div className="pt-18 pb-20">
+        <div className="max-w-6xl mx-auto p-6 md:p-12">
+          <div className="flex items-center gap-4 mb-10">
+            <div className="p-3 bg-indigo-600 rounded-2xl shadow-lg shadow-indigo-600/20">
+              <Sparkles className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-black tracking-tight">Broadcast Center</h1>
+              <p className="text-white/40 text-sm mt-1 uppercase tracking-widest font-bold">VidStream Neural Uplink 1.0</p>
+            </div>
+          </div>
 
           {!videoFile ? (
-            <div 
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
               onClick={() => fileInputRef.current?.click()}
-              className="border-2 border-dashed border-[#ccc] rounded-xl p-12 text-center cursor-pointer hover:border-[#065fd4] hover:bg-[#f8faff] transition-all"
+              className="border-2 border-dashed border-white/10 rounded-[40px] p-20 text-center cursor-pointer hover:border-indigo-500/50 hover:bg-white/[0.02] transition-all group relative overflow-hidden"
             >
-              <div className="w-24 h-24 bg-[#f2f2f2] rounded-full flex items-center justify-center mx-auto mb-6">
-                <Upload size={40} className="text-[#606060]" />
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-indigo-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="w-28 h-28 bg-white/5 rounded-[32px] flex items-center justify-center mx-auto mb-8 text-white/20 group-hover:text-indigo-500 group-hover:bg-indigo-500/10 transition-all group-hover:scale-110">
+                <Upload size={48} />
               </div>
-              <p className="text-lg font-medium mb-2">Drag and drop video files to upload</p>
-              <p className="text-[#606060] text-sm mb-4">Your videos will be private until you publish them.</p>
-              <button className="px-6 py-3 bg-[#065fd4] text-white rounded-full font-medium hover:bg-[#0556be] transition-colors">
-                SELECT FILES
+              <h3 className="text-2xl font-bold mb-3">Initiate Transmission</h3>
+              <p className="text-white/30 text-lg mb-10 max-w-sm mx-auto">Select a neural media file to begin the broadcasting protocol.</p>
+              <button className="px-12 py-4 bg-indigo-600 text-white rounded-2xl font-bold hover:bg-indigo-500 transition-all shadow-xl shadow-indigo-600/20 hover:scale-[1.05]">
+                SELECT SIGNAL
               </button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="video/*"
-                onChange={handleVideoSelect}
-                className="hidden"
-              />
-            </div>
+              <input ref={fileInputRef} type="file" accept="video/*" onChange={handleVideoSelect} className="hidden" />
+            </motion.div>
           ) : (
-            <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-              {uploading && (
-                <div className="p-4 bg-[#e8f0fe] border-b border-[#c2d7f8]">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-[#065fd4]">
-                      {uploadProgress < 100 ? 'Uploading...' : 'Processing...'}
-                    </span>
-                    <span className="text-sm text-[#065fd4]">{uploadProgress}%</span>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+              <motion.div 
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="lg:col-span-2 space-y-8"
+              >
+                {uploading && (
+                  <div className="p-8 bg-indigo-600/10 border border-indigo-500/20 rounded-[32px] backdrop-blur-xl">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <Loader2 className="w-5 h-5 text-indigo-500 animate-spin" />
+                        <span className="font-bold text-indigo-400 uppercase tracking-widest text-xs">
+                          {uploadProgress < 100 ? 'Transmitting Signal...' : 'Neural Synchronization...'}
+                        </span>
+                      </div>
+                      <span className="font-black text-white text-lg">{uploadProgress}%</span>
+                    </div>
+                    <div className="h-3 bg-white/5 rounded-full overflow-hidden border border-white/5">
+                      <motion.div 
+                        initial={{ width: 0 }}
+                        animate={{ width: `${uploadProgress}%` }}
+                        className="h-full bg-indigo-600 shadow-[0_0_15px_rgba(79,70,229,0.5)]"
+                      />
+                    </div>
                   </div>
-                  <div className="h-2 bg-[#c2d7f8] rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-[#065fd4] rounded-full transition-all duration-300"
-                      style={{ width: `${uploadProgress}%` }}
-                    />
-                  </div>
-                </div>
-              )}
+                )}
 
-              <div className="p-6">
-                <div className="flex gap-6">
-                  <div className="flex-1 space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-2">Title (required)</label>
+                {error && (
+                  <div className="p-6 bg-rose-500/10 border border-rose-500/20 rounded-2xl text-rose-400 text-sm flex items-center gap-4">
+                    <div className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
+                    {error}
+                  </div>
+                )}
+
+                <div className="bg-white/5 border border-white/10 rounded-[40px] p-8 md:p-10 space-y-8">
+                  <div className="space-y-6">
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold text-white/40 uppercase tracking-[0.2em] px-1">Broadcast Title</label>
                       <input
                         type="text"
                         value={formData.title}
                         onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                        placeholder="Add a title that describes your video"
-                        className="w-full px-4 py-3 border border-[#ccc] rounded-lg focus:outline-none focus:border-[#065fd4] text-sm"
-                        maxLength={100}
+                        placeholder="Define your transmission..."
+                        className="w-full h-14 px-6 bg-white/[0.03] border border-white/10 rounded-2xl focus:outline-none focus:border-indigo-500/50 focus:ring-4 focus:ring-indigo-500/5 transition-all text-lg font-bold"
                       />
-                      <div className="text-right text-xs text-[#606060] mt-1">{formData.title.length}/100</div>
                     </div>
 
-                    <div>
-                      <label className="block text-sm font-medium mb-2">Description</label>
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold text-white/40 uppercase tracking-[0.2em] px-1">Signal Context</label>
                       <textarea
                         value={formData.description}
                         onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                        placeholder="Tell viewers about your video"
-                        rows={5}
-                        className="w-full px-4 py-3 border border-[#ccc] rounded-lg focus:outline-none focus:border-[#065fd4] text-sm resize-none"
-                        maxLength={5000}
+                        placeholder="Provide the neural metadata..."
+                        rows={6}
+                        className="w-full p-6 bg-white/[0.03] border border-white/10 rounded-[32px] focus:outline-none focus:border-indigo-500/50 focus:ring-4 focus:ring-indigo-500/5 transition-all text-sm leading-relaxed resize-none"
                       />
-                      <div className="text-right text-xs text-[#606060] mt-1">{formData.description.length}/5000</div>
                     </div>
 
-                    <div>
-                      <label className="block text-sm font-medium mb-2">Category</label>
-                      <select
-                        value={formData.category_id}
-                        onChange={(e) => setFormData(prev => ({ ...prev, category_id: e.target.value }))}
-                        className="w-full px-4 py-3 border border-[#ccc] rounded-lg focus:outline-none focus:border-[#065fd4] text-sm bg-white"
-                      >
-                        <option value="">Select a category</option>
-                        {categories.map(cat => (
-                          <option key={cat.id} value={cat.id}>{cat.name}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium mb-2">Visibility</label>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
-                        {[
-                          { value: 'public', icon: Globe, label: 'Public', desc: 'Everyone can watch' },
-                          { value: 'unlisted', icon: Users, label: 'Unlisted', desc: 'Anyone with the link can watch' },
-                          { value: 'private', icon: Lock, label: 'Private', desc: 'Only you can watch' },
-                        ].map(option => (
-                          <label 
-                            key={option.value}
-                            className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-colors ${
-                              formData.visibility === option.value 
-                                ? 'border-[#065fd4] bg-[#e8f0fe]' 
-                                : 'border-[#ccc] hover:bg-[#f2f2f2]'
-                            }`}
-                          >
-                            <input
-                              type="radio"
-                              name="visibility"
-                              value={option.value}
-                              checked={formData.visibility === option.value}
-                              onChange={(e) => setFormData(prev => ({ ...prev, visibility: e.target.value }))}
-                              className="hidden"
-                            />
-                            <option.icon size={20} className={formData.visibility === option.value ? 'text-[#065fd4]' : 'text-[#606060]'} />
-                            <div className="flex-1">
-                              <p className="font-medium text-sm">{option.label}</p>
-                              <p className="text-xs text-[#606060]">{option.desc}</p>
-                            </div>
-                            {formData.visibility === option.value && (
-                              <Check size={20} className="text-[#065fd4]" />
-                            )}
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="flex items-center gap-3 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={formData.is_short}
-                          onChange={(e) => setFormData(prev => ({ ...prev, is_short: e.target.checked }))}
-                          className="w-5 h-5 rounded border-[#ccc] text-[#065fd4] focus:ring-[#065fd4]"
-                        />
-                        <div>
-                          <p className="font-medium text-sm">This is a Short</p>
-                          <p className="text-xs text-[#606060]">Short videos (under 60 seconds) appear in Shorts feed</p>
-                        </div>
-                      </label>
-                    </div>
-                  </div>
-
-                  <div className="w-80 shrink-0">
-                    <div className="sticky top-20 space-y-4">
-                      <div className="aspect-video bg-black rounded-lg overflow-hidden">
-                        <video
-                          src={videoPreview}
-                          controls
-                          className="w-full h-full object-contain"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium mb-2">Thumbnail</label>
-                        <div 
-                          onClick={() => thumbnailInputRef.current?.click()}
-                          className={`aspect-video border-2 border-dashed rounded-lg cursor-pointer overflow-hidden transition-colors ${
-                            thumbnailPreview ? 'border-transparent' : 'border-[#ccc] hover:border-[#065fd4]'
-                          }`}
+                        <label className="text-xs font-bold text-white/40 uppercase tracking-[0.2em] px-1">Neural Category</label>
+                        <select
+                          value={formData.category_id}
+                          onChange={(e) => setFormData(prev => ({ ...prev, category_id: e.target.value }))}
+                          className="w-full h-14 px-6 bg-white/[0.03] border border-white/10 rounded-2xl focus:outline-none focus:border-indigo-500/50 text-sm font-semibold text-white/80 appearance-none cursor-pointer"
                         >
-                          {thumbnailPreview ? (
-                            <img src={thumbnailPreview} alt="Thumbnail" className="w-full h-full object-cover" />
-                          ) : (
-                            <div className="w-full h-full flex flex-col items-center justify-center text-[#606060]">
-                              <ImageIcon size={32} className="mb-2" />
-                              <p className="text-sm">Upload thumbnail</p>
-                            </div>
-                          )}
-                        </div>
-                        <input
-                          ref={thumbnailInputRef}
-                          type="file"
-                          accept="image/*"
-                          onChange={handleThumbnailSelect}
-                          className="hidden"
-                        />
+                          <option value="" className="bg-[#0f0f12]">Unclassified</option>
+                          {categories.map(cat => (
+                            <option key={cat.id} value={cat.id} className="bg-[#0f0f12]">{cat.name}</option>
+                          ))}
+                        </select>
                       </div>
 
-                      <div className="text-sm text-[#606060]">
-                        <p className="font-medium text-[#0f0f0f] mb-1">Video filename</p>
-                        <p className="truncate">{videoFile.name}</p>
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold text-white/40 uppercase tracking-[0.2em] px-1">Signal Protocol</label>
+                        <div className="flex bg-white/[0.03] border border-white/10 rounded-2xl p-1 h-14">
+                          {['public', 'private'].map((v) => (
+                            <button
+                              key={v}
+                              onClick={() => setFormData(prev => ({ ...prev, visibility: v }))}
+                              className={`flex-1 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${formData.visibility === v ? 'bg-indigo-600 text-white shadow-lg' : 'text-white/30 hover:text-white'}`}
+                            >
+                              {v === 'public' ? <div className="flex items-center justify-center gap-2"><Globe size={14} /> Global</div> : <div className="flex items-center justify-center gap-2"><Lock size={14} /> Encrypted</div>}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="pt-6 flex flex-col sm:flex-row items-center justify-between gap-6">
+                    <button
+                      onClick={() => { setVideoFile(null); setVideoPreview(''); }}
+                      className="px-8 h-14 rounded-2xl font-bold text-white/40 hover:text-white hover:bg-white/5 transition-all w-full sm:w-auto"
+                      disabled={uploading}
+                    >
+                      Abort Mission
+                    </button>
+                    <button
+                      onClick={handleUpload}
+                      disabled={!formData.title || uploading}
+                      className="px-12 h-14 bg-indigo-600 hover:bg-indigo-500 text-white font-black uppercase tracking-widest rounded-2xl transition-all shadow-xl shadow-indigo-600/30 disabled:opacity-50 hover:scale-[1.02] flex items-center justify-center gap-3 w-full sm:w-auto"
+                    >
+                      {uploading ? (
+                        <>
+                          <Loader2 size={20} className="animate-spin" />
+                          <span>Processing...</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>Establish Uplink</span>
+                          <ArrowRight size={20} />
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+
+              <motion.div 
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="space-y-8"
+              >
+                <div className="bg-white/5 border border-white/10 rounded-[40px] p-8 space-y-8">
+                  <div className="space-y-4">
+                    <label className="text-xs font-bold text-white/40 uppercase tracking-[0.2em] px-1">Visual Signature</label>
+                    <div className="aspect-video bg-black rounded-[24px] overflow-hidden border border-white/5 relative group">
+                      <video src={videoPreview} className="w-full h-full object-contain" />
+                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Play className="w-12 h-12 text-white fill-white" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <label className="text-xs font-bold text-white/40 uppercase tracking-[0.2em] px-1">Neural Thumbnail</label>
+                    <div 
+                      onClick={() => thumbnailInputRef.current?.click()}
+                      className={`aspect-video rounded-[24px] border-2 border-dashed cursor-pointer overflow-hidden transition-all relative group ${thumbnailPreview ? 'border-transparent' : 'border-white/10 hover:border-indigo-500/50 hover:bg-white/[0.02]'}`}
+                    >
+                      {thumbnailPreview ? (
+                        <>
+                          <img src={thumbnailPreview} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                          <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Zap className="text-white" />
+                          </div>
+                        </>
+                      ) : (
+                        <div className="w-full h-full flex flex-col items-center justify-center text-white/20 group-hover:text-indigo-500 transition-colors">
+                          <ImageIcon size={32} className="mb-3" />
+                          <p className="text-[10px] font-black uppercase tracking-[0.2em]">Upload Keyframe</p>
+                        </div>
+                      )}
+                    </div>
+                    <input ref={thumbnailInputRef} type="file" accept="image/*" onChange={handleThumbnailSelect} className="hidden" />
+                  </div>
+
+                  <div className="p-6 bg-white/[0.03] rounded-3xl border border-white/5 space-y-4">
+                    <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-widest text-white/30">
+                      <span>Signal Strength</span>
+                      <span className="text-indigo-400">Optimal</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-indigo-500/10 rounded-xl flex items-center justify-center text-indigo-400">
+                        <Film size={20} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-bold text-white truncate">{videoFile.name}</p>
+                        <p className="text-[10px] text-white/30 font-bold uppercase mt-0.5">{(videoFile.size / (1024 * 1024)).toFixed(2)} MB • Neural Stream</p>
                       </div>
                     </div>
                   </div>
                 </div>
-
-                <div className="flex items-center justify-between mt-6 pt-6 border-t border-[#e5e5e5]">
-                  <button
-                    onClick={() => {
-                      setVideoFile(null);
-                      setVideoPreview('');
-                      setThumbnailFile(null);
-                      setThumbnailPreview('');
-                      setFormData({
-                        title: '',
-                        description: '',
-                        category_id: '',
-                        visibility: 'public',
-                        is_short: false,
-                      });
-                    }}
-                    className="px-6 py-2 text-[#065fd4] font-medium hover:bg-[#e8f0fe] rounded-full transition-colors"
-                    disabled={uploading}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleUpload}
-                    disabled={!formData.title || uploading}
-                    className="px-6 py-2 bg-[#065fd4] text-white font-medium rounded-full hover:bg-[#0556be] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                  >
-                    {uploading && <Loader2 size={16} className="animate-spin" />}
-                    {uploading ? 'Uploading...' : 'Publish'}
-                  </button>
-                </div>
-              </div>
+              </motion.div>
             </div>
           )}
         </div>
