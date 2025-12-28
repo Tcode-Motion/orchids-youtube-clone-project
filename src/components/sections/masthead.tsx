@@ -143,7 +143,7 @@ const Masthead: React.FC<MastheadProps> = ({ onMenuClick }) => {
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search YouTube"
+            placeholder="Search VidStream"
             autoFocus
             className="flex-1 h-10 px-4 bg-[#f2f2f2] rounded-full outline-none text-[16px] placeholder:text-[#888]"
           />
@@ -650,7 +650,7 @@ function CreateChannelModal({ onClose, onSuccess }: { onClose: () => void; onSuc
                 placeholder="@yourhandle"
                 className="w-full px-3 py-2.5 border border-[#ccc] rounded-lg focus:outline-none focus:border-[#065fd4]"
               />
-              <p className="text-xs text-[#606060] mt-1">Your handle is your unique identifier on YouTube</p>
+              <p className="text-xs text-[#606060] mt-1">Your handle is your unique identifier on VidStream</p>
             </div>
           </div>
         </div>
