@@ -1,7 +1,6 @@
 "use client";
 
 import React from 'react';
-import Image from 'next/image';
 import { MoreVertical } from 'lucide-react';
 
 const categories = [
@@ -14,82 +13,146 @@ const videos = [
   {
     id: 1,
     title: "Building a YouTube Clone with Next.js 15 and Tailwind CSS",
-    thumbnail: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/test-clones/5bf2a976-9a8b-4285-99e3-d8c2d732fe3c-youtube-com/assets/images/images_1.png",
+    thumbnail: "https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg",
     channelName: "Tech Masterclass",
-    channelAvatar: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/test-clones/5bf2a976-9a8b-4285-99e3-d8c2d732fe3c-youtube-com/assets/images/images_1.png",
+    channelInitial: "T",
+    channelColor: "#ff0000",
     views: "1.2M views",
     timestamp: "2 days ago",
-    duration: "15:24"
+    duration: "15:24",
+    isLive: false
   },
   {
     id: 2,
     title: "The Future of Web Development in 2025",
-    thumbnail: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/test-clones/5bf2a976-9a8b-4285-99e3-d8c2d732fe3c-youtube-com/assets/images/images_1.png",
+    thumbnail: "https://i.ytimg.com/vi/jNQXAC9IVRw/hqdefault.jpg",
     channelName: "Dev Insights",
-    channelAvatar: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/test-clones/5bf2a976-9a8b-4285-99e3-d8c2d732fe3c-youtube-com/assets/images/images_1.png",
+    channelInitial: "D",
+    channelColor: "#065fd4",
     views: "450K views",
     timestamp: "1 week ago",
-    duration: "10:05"
+    duration: "10:05",
+    isLive: false
   },
   {
     id: 3,
     title: "10 Tips for Mastering Tailwind CSS Fast",
-    thumbnail: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/test-clones/5bf2a976-9a8b-4285-99e3-d8c2d732fe3c-youtube-com/assets/images/images_1.png",
+    thumbnail: "https://i.ytimg.com/vi/9bZkp7q19f0/hqdefault.jpg",
     channelName: "Styling Pro",
-    channelAvatar: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/test-clones/5bf2a976-9a8b-4285-99e3-d8c2d732fe3c-youtube-com/assets/images/images_1.png",
+    channelInitial: "S",
+    channelColor: "#ff6600",
     views: "89K views",
     timestamp: "3 hours ago",
-    duration: "08:42"
+    duration: "08:42",
+    isLive: false
   },
   {
     id: 4,
-    title: "Live: Coding Session - React Server Components",
-    thumbnail: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/test-clones/5bf2a976-9a8b-4285-99e3-d8c2d732fe3c-youtube-com/assets/images/images_1.png",
+    title: "Live: Coding Session - React Server Components Deep Dive",
+    thumbnail: "https://i.ytimg.com/vi/kJQP7kiw5Fk/hqdefault.jpg",
     channelName: "Code Live",
-    channelAvatar: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/test-clones/5bf2a976-9a8b-4285-99e3-d8c2d732fe3c-youtube-com/assets/images/images_1.png",
+    channelInitial: "C",
+    channelColor: "#ff0000",
     views: "2.5K watching",
     timestamp: "LIVE",
-    duration: "LIVE"
+    duration: "LIVE",
+    isLive: true
   },
   {
     id: 5,
-    title: "How to Optimize Your Next.js Application",
-    thumbnail: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/test-clones/5bf2a976-9a8b-4285-99e3-d8c2d732fe3c-youtube-com/assets/images/images_1.png",
+    title: "How to Optimize Your Next.js Application for Performance",
+    thumbnail: "https://i.ytimg.com/vi/RgKAFK5djSk/hqdefault.jpg",
     channelName: "Performance Guru",
-    channelAvatar: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/test-clones/5bf2a976-9a8b-4285-99e3-d8c2d732fe3c-youtube-com/assets/images/images_1.png",
+    channelInitial: "P",
+    channelColor: "#9147ff",
     views: "125K views",
     timestamp: "5 days ago",
-    duration: "12:18"
+    duration: "12:18",
+    isLive: false
   },
   {
     id: 6,
-    title: "Top 5 VS Code Extensions for Web Devs",
-    thumbnail: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/test-clones/5bf2a976-9a8b-4285-99e3-d8c2d732fe3c-youtube-com/assets/images/images_1.png",
+    title: "Top 5 VS Code Extensions for Web Devs in 2024",
+    thumbnail: "https://i.ytimg.com/vi/hT_nvWreIhg/hqdefault.jpg",
     channelName: "Developer Tools",
-    channelAvatar: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/test-clones/5bf2a976-9a8b-4285-99e3-d8c2d732fe3c-youtube-com/assets/images/images_1.png",
+    channelInitial: "D",
+    channelColor: "#00aa00",
     views: "300K views",
     timestamp: "4 months ago",
-    duration: "06:30"
+    duration: "06:30",
+    isLive: false
   },
   {
     id: 7,
-    title: "TypeScript Deep Dive: Advanced Types",
-    thumbnail: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/test-clones/5bf2a976-9a8b-4285-99e3-d8c2d732fe3c-youtube-com/assets/images/images_1.png",
+    title: "TypeScript Deep Dive: Advanced Types Explained",
+    thumbnail: "https://i.ytimg.com/vi/fJ9rUzIMcZQ/hqdefault.jpg",
     channelName: "TS Expert",
-    channelAvatar: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/test-clones/5bf2a976-9a8b-4285-99e3-d8c2d732fe3c-youtube-com/assets/images/images_1.png",
+    channelInitial: "T",
+    channelColor: "#3178c6",
     views: "56K views",
     timestamp: "1 day ago",
-    duration: "22:15"
+    duration: "22:15",
+    isLive: false
   },
   {
     id: 8,
-    title: "Creating Pixel Perfect Designs with CSS",
-    thumbnail: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/test-clones/5bf2a976-9a8b-4285-99e3-d8c2d732fe3c-youtube-com/assets/images/images_1.png",
+    title: "Creating Pixel Perfect Designs with CSS Grid and Flexbox",
+    thumbnail: "https://i.ytimg.com/vi/OPf0YbXqDm0/hqdefault.jpg",
     channelName: "UI/UX Mastery",
-    channelAvatar: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/test-clones/5bf2a976-9a8b-4285-99e3-d8c2d732fe3c-youtube-com/assets/images/images_1.png",
+    channelInitial: "U",
+    channelColor: "#e91e63",
     views: "1.2M views",
     timestamp: "6 months ago",
-    duration: "18:40"
+    duration: "18:40",
+    isLive: false
+  },
+  {
+    id: 9,
+    title: "Live: Q&A Session - Ask Me Anything About Programming",
+    thumbnail: "https://i.ytimg.com/vi/YQHsXMglC9A/hqdefault.jpg",
+    channelName: "Code Academy",
+    channelInitial: "C",
+    channelColor: "#ff0000",
+    views: "1.8K watching",
+    timestamp: "LIVE",
+    duration: "LIVE",
+    isLive: true
+  },
+  {
+    id: 10,
+    title: "Node.js Complete Course - From Beginner to Advanced",
+    thumbnail: "https://i.ytimg.com/vi/CQaF3jc0e1w/hqdefault.jpg",
+    channelName: "Backend Masters",
+    channelInitial: "B",
+    channelColor: "#339933",
+    views: "890K views",
+    timestamp: "2 weeks ago",
+    duration: "3:45:22",
+    isLive: false
+  },
+  {
+    id: 11,
+    title: "React 19 New Features You Need to Know",
+    thumbnail: "https://i.ytimg.com/vi/pTFZFxd4hOI/hqdefault.jpg",
+    channelName: "React Daily",
+    channelInitial: "R",
+    channelColor: "#61dafb",
+    views: "234K views",
+    timestamp: "3 days ago",
+    duration: "14:55",
+    isLive: false
+  },
+  {
+    id: 12,
+    title: "Building Real-time Apps with WebSockets Tutorial",
+    thumbnail: "https://i.ytimg.com/vi/JhHMJCUmq28/hqdefault.jpg",
+    channelName: "Full Stack Dev",
+    channelInitial: "F",
+    channelColor: "#ff9900",
+    views: "178K views",
+    timestamp: "1 month ago",
+    duration: "28:12",
+    isLive: false
   }
 ];
 
