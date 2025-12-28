@@ -68,18 +68,18 @@ function PlaylistContent() {
             .order('created_at', { ascending: false });
           
           if (data) {
-            setVideos(data.map((item: { video: VideoWithChannel }) => item.video));
-          }
-        } else if (isLikedVideos) {
-          const { data } = await supabase
-            .from('video_likes')
-            .select(`video:videos(*, channel:channels(*))`)
-            .eq('user_id', user.id)
-            .eq('is_like', true)
-            .order('created_at', { ascending: false });
-          
-          if (data) {
-            setVideos(data.map((item: { video: VideoWithChannel }) => item.video));
+              setVideos(data.map((item: unknown) => (item as { video: VideoWithChannel }).video));
+            }
+          } else if (isLikedVideos) {
+            const { data } = await supabase
+              .from('video_likes')
+              .select(`video:videos(*, channel:channels(*))`)
+              .eq('user_id', user.id)
+              .eq('is_like', true)
+              .order('created_at', { ascending: false });
+            
+            if (data) {
+              setVideos(data.map((item: unknown) => (item as { video: VideoWithChannel }).video));
           }
         }
       } else {
