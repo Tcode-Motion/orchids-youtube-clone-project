@@ -1,174 +1,152 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MoreVertical, CheckCircle2 } from 'lucide-react';
+import { supabase } from '@/lib/supabase/client';
+import type { Video, Channel, Category } from '@/lib/supabase/types';
+import Link from 'next/link';
 
-const categories = [
-  "All", "Music", "Gaming", "Live", "Synthesizers", "Computers", 
-  "Podcasts", "Mixes", "News", "JavaScript", "Visual Arts", 
-  "Recently uploaded", "Watched", "New to you"
-];
+interface VideoWithChannel extends Video {
+  channel: Channel;
+}
 
-const videos = [
-  {
-    id: 1,
-    title: "Building a YouTube Clone with Next.js 15 and Tailwind CSS",
-    thumbnail: "https://picsum.photos/seed/vid1/320/180",
-    channelName: "Tech Masterclass",
-    channelAvatar: "https://picsum.photos/seed/ch1/36/36",
-    views: "1.2M views",
-    timestamp: "2 days ago",
-    duration: "15:24",
-    isLive: false,
-    verified: true
-  },
-  {
-    id: 2,
-    title: "The Future of Web Development in 2025",
-    thumbnail: "https://picsum.photos/seed/vid2/320/180",
-    channelName: "Dev Insights",
-    channelAvatar: "https://picsum.photos/seed/ch2/36/36",
-    views: "450K views",
-    timestamp: "1 week ago",
-    duration: "10:05",
-    isLive: false,
-    verified: true
-  },
-  {
-    id: 3,
-    title: "10 Tips for Mastering Tailwind CSS Fast",
-    thumbnail: "https://picsum.photos/seed/vid3/320/180",
-    channelName: "Styling Pro",
-    channelAvatar: "https://picsum.photos/seed/ch3/36/36",
-    views: "89K views",
-    timestamp: "3 hours ago",
-    duration: "08:42",
-    isLive: false,
-    verified: false
-  },
-  {
-    id: 4,
-    title: "Live: Coding Session - React Server Components Deep Dive",
-    thumbnail: "https://picsum.photos/seed/vid4/320/180",
-    channelName: "Code Live",
-    channelAvatar: "https://picsum.photos/seed/ch4/36/36",
-    views: "2.5K watching",
-    timestamp: "LIVE",
-    duration: "LIVE",
-    isLive: true,
-    verified: true
-  },
-  {
-    id: 5,
-    title: "How to Optimize Your Next.js Application for Performance",
-    thumbnail: "https://picsum.photos/seed/vid5/320/180",
-    channelName: "Performance Guru",
-    channelAvatar: "https://picsum.photos/seed/ch5/36/36",
-    views: "125K views",
-    timestamp: "5 days ago",
-    duration: "12:18",
-    isLive: false,
-    verified: true
-  },
-  {
-    id: 6,
-    title: "Top 5 VS Code Extensions for Web Devs in 2024",
-    thumbnail: "https://picsum.photos/seed/vid6/320/180",
-    channelName: "Developer Tools",
-    channelAvatar: "https://picsum.photos/seed/ch6/36/36",
-    views: "300K views",
-    timestamp: "4 months ago",
-    duration: "06:30",
-    isLive: false,
-    verified: false
-  },
-  {
-    id: 7,
-    title: "TypeScript Deep Dive: Advanced Types Explained",
-    thumbnail: "https://picsum.photos/seed/vid7/320/180",
-    channelName: "TS Expert",
-    channelAvatar: "https://picsum.photos/seed/ch7/36/36",
-    views: "56K views",
-    timestamp: "1 day ago",
-    duration: "22:15",
-    isLive: false,
-    verified: true
-  },
-  {
-    id: 8,
-    title: "Creating Pixel Perfect Designs with CSS Grid and Flexbox",
-    thumbnail: "https://picsum.photos/seed/vid8/320/180",
-    channelName: "UI/UX Mastery",
-    channelAvatar: "https://picsum.photos/seed/ch8/36/36",
-    views: "1.2M views",
-    timestamp: "6 months ago",
-    duration: "18:40",
-    isLive: false,
-    verified: true
-  },
-  {
-    id: 9,
-    title: "Live: Q&A Session - Ask Me Anything About Programming",
-    thumbnail: "https://picsum.photos/seed/vid9/320/180",
-    channelName: "Code Academy",
-    channelAvatar: "https://picsum.photos/seed/ch9/36/36",
-    views: "1.8K watching",
-    timestamp: "LIVE",
-    duration: "LIVE",
-    isLive: true,
-    verified: true
-  },
-  {
-    id: 10,
-    title: "Node.js Complete Course - From Beginner to Advanced",
-    thumbnail: "https://picsum.photos/seed/vid10/320/180",
-    channelName: "Backend Masters",
-    channelAvatar: "https://picsum.photos/seed/ch10/36/36",
-    views: "890K views",
-    timestamp: "2 weeks ago",
-    duration: "3:45:22",
-    isLive: false,
-    verified: true
-  },
-  {
-    id: 11,
-    title: "React 19 New Features You Need to Know",
-    thumbnail: "https://picsum.photos/seed/vid11/320/180",
-    channelName: "React Daily",
-    channelAvatar: "https://picsum.photos/seed/ch11/36/36",
-    views: "234K views",
-    timestamp: "3 days ago",
-    duration: "14:55",
-    isLive: false,
-    verified: true
-  },
-  {
-    id: 12,
-    title: "Building Real-time Apps with WebSockets Tutorial",
-    thumbnail: "https://picsum.photos/seed/vid12/320/180",
-    channelName: "Full Stack Dev",
-    channelAvatar: "https://picsum.photos/seed/ch12/36/36",
-    views: "178K views",
-    timestamp: "1 month ago",
-    duration: "28:12",
-    isLive: false,
-    verified: false
+function formatViews(views: number): string {
+  if (views >= 1000000000) {
+    return (views / 1000000000).toFixed(1).replace(/\.0$/, '') + 'B';
   }
-];
+  if (views >= 1000000) {
+    return (views / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+  }
+  if (views >= 1000) {
+    return (views / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
+  }
+  return views.toString();
+}
+
+function formatDuration(seconds: number): string {
+  if (seconds === 0) return 'LIVE';
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const secs = seconds % 60;
+  
+  if (hours > 0) {
+    return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  }
+  return `${minutes}:${secs.toString().padStart(2, '0')}`;
+}
+
+function timeAgo(date: string): string {
+  const now = new Date();
+  const published = new Date(date);
+  const diffInSeconds = Math.floor((now.getTime() - published.getTime()) / 1000);
+  
+  if (diffInSeconds < 60) return 'Just now';
+  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} minutes ago`;
+  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
+  if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)} days ago`;
+  if (diffInSeconds < 2592000) return `${Math.floor(diffInSeconds / 604800)} weeks ago`;
+  if (diffInSeconds < 31536000) return `${Math.floor(diffInSeconds / 2592000)} months ago`;
+  return `${Math.floor(diffInSeconds / 31536000)} years ago`;
+}
 
 export default function VideoFeed() {
-  const [activeCategory, setActiveCategory] = useState(0);
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [videos, setVideos] = useState<VideoWithChannel[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchData() {
+      const [categoriesRes, videosRes] = await Promise.all([
+        supabase.from('categories').select('*').order('name'),
+        supabase.from('videos').select(`
+          *,
+          channel:channels(*)
+        `).order('published_at', { ascending: false })
+      ]);
+
+      if (categoriesRes.data) {
+        setCategories(categoriesRes.data);
+      }
+      if (videosRes.data) {
+        setVideos(videosRes.data as VideoWithChannel[]);
+      }
+      setLoading(false);
+    }
+    fetchData();
+  }, []);
+
+  useEffect(() => {
+    async function fetchVideos() {
+      let query = supabase.from('videos').select(`
+        *,
+        channel:channels(*)
+      `).order('published_at', { ascending: false });
+
+      if (activeCategory && activeCategory !== 'All') {
+        const category = categories.find(c => c.name === activeCategory);
+        if (category) {
+          query = query.eq('category_id', category.id);
+        }
+        if (activeCategory === 'Live') {
+          query = supabase.from('videos').select(`
+            *,
+            channel:channels(*)
+          `).eq('is_live', true).order('published_at', { ascending: false });
+        }
+      }
+
+      const { data } = await query;
+      if (data) {
+        setVideos(data as VideoWithChannel[]);
+      }
+    }
+    
+    if (categories.length > 0) {
+      fetchVideos();
+    }
+  }, [activeCategory, categories]);
+
+  const displayCategories = ['All', 'Live', ...categories.filter(c => c.name !== 'All').map(c => c.name)];
+
+  if (loading) {
+    return (
+      <main className="flex-1 overflow-y-auto bg-[#f9f9f9] ml-0 lg:ml-[240px] transition-all duration-300">
+        <div className="sticky top-[56px] z-40 bg-white py-3 px-6 flex items-center gap-3 border-b border-[#e5e5e5]">
+          <div className="flex gap-3 overflow-x-auto no-scrollbar">
+            {[...Array(10)].map((_, i) => (
+              <div key={i} className="h-8 w-20 bg-gray-200 rounded-lg animate-pulse" />
+            ))}
+          </div>
+        </div>
+        <div className="p-4 md:p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-10">
+          {[...Array(12)].map((_, i) => (
+            <div key={i} className="flex flex-col">
+              <div className="aspect-video w-full bg-gray-200 rounded-xl animate-pulse" />
+              <div className="mt-3 flex gap-3">
+                <div className="h-9 w-9 bg-gray-200 rounded-full animate-pulse" />
+                <div className="flex-1">
+                  <div className="h-4 bg-gray-200 rounded animate-pulse mb-2" />
+                  <div className="h-3 w-24 bg-gray-200 rounded animate-pulse" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="flex-1 overflow-y-auto bg-[#f9f9f9] ml-0 lg:ml-[240px] transition-all duration-300">
       <div className="sticky top-[56px] z-40 bg-white py-3 px-6 flex items-center gap-3 border-b border-[#e5e5e5]">
         <div className="flex gap-3 overflow-x-auto no-scrollbar scroll-smooth">
-          {categories.map((category, idx) => (
+          {displayCategories.map((category, idx) => (
             <button
               key={idx}
-              onClick={() => setActiveCategory(idx)}
+              onClick={() => setActiveCategory(category === 'All' ? null : category)}
               className={`h-8 px-3 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
-                idx === activeCategory 
+                (category === 'All' && activeCategory === null) || activeCategory === category
                   ? 'bg-[#0f0f0f] text-white' 
                   : 'bg-[#f2f2f2] text-[#0f0f0f] hover:bg-[#e5e5e5]'
               }`}
@@ -181,25 +159,26 @@ export default function VideoFeed() {
 
       <div className="p-4 md:p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-10">
         {videos.map((video) => (
-          <div key={video.id} className="flex flex-col cursor-pointer group">
+          <Link href={`/watch?v=${video.id}`} key={video.id} className="flex flex-col cursor-pointer group">
             <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-gray-200">
               <img
-                src={video.thumbnail}
+                src={video.thumbnail_url || 'https://picsum.photos/seed/default/640/360'}
                 alt={video.title}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
               />
-              {video.isLive ? (
+              {video.is_live ? (
                 <div className="absolute bottom-2 left-2 flex items-center gap-1.5">
-                  <span className="bg-[#cc0000] text-white text-xs font-medium px-1 py-0.5 rounded-sm uppercase">
+                  <span className="bg-[#cc0000] text-white text-xs font-medium px-1.5 py-0.5 rounded-sm uppercase flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
                     Live
                   </span>
-                  <span className="bg-black/70 text-white text-xs px-1 py-0.5 rounded-sm">
-                    {video.views.replace(' watching', '')}
+                  <span className="bg-black/70 text-white text-xs px-1.5 py-0.5 rounded-sm">
+                    {formatViews(video.view_count)} watching
                   </span>
                 </div>
               ) : (
                 <div className="absolute bottom-2 right-2 bg-black/80 text-white text-xs font-medium px-1 py-0.5 rounded">
-                  {video.duration}
+                  {formatDuration(video.duration)}
                 </div>
               )}
               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
@@ -208,8 +187,8 @@ export default function VideoFeed() {
             <div className="mt-3 flex gap-3">
               <div className="flex-shrink-0">
                 <img 
-                  src={video.channelAvatar}
-                  alt={video.channelName}
+                  src={video.channel?.avatar_url || 'https://picsum.photos/seed/default/36/36'}
+                  alt={video.channel?.name || 'Channel'}
                   className="h-9 w-9 rounded-full object-cover"
                 />
               </div>
@@ -219,27 +198,30 @@ export default function VideoFeed() {
                 </h3>
                 <div className="flex items-center gap-1">
                   <span className="text-xs text-[#606060] hover:text-[#0f0f0f] transition-colors">
-                    {video.channelName}
+                    {video.channel?.name || 'Unknown Channel'}
                   </span>
-                  {video.verified && (
+                  {video.channel?.is_verified && (
                     <CheckCircle2 size={12} className="text-[#606060]" />
                   )}
                 </div>
                 <div className="text-xs text-[#606060] flex items-center">
-                  <span>{video.views}</span>
-                  {!video.isLive && (
+                  <span>{formatViews(video.view_count)} views</span>
+                  {!video.is_live && (
                     <>
                       <span className="mx-1">&middot;</span>
-                      <span>{video.timestamp}</span>
+                      <span>{timeAgo(video.published_at)}</span>
                     </>
                   )}
                 </div>
-                <button className="absolute right-0 top-0 opacity-0 group-hover:opacity-100 p-1 hover:bg-[#e5e5e5] rounded-full transition-all">
+                <button 
+                  onClick={(e) => e.preventDefault()}
+                  className="absolute right-0 top-0 opacity-0 group-hover:opacity-100 p-1 hover:bg-[#e5e5e5] rounded-full transition-all"
+                >
                   <MoreVertical size={20} className="text-[#0f0f0f]" />
                 </button>
               </div>
             </div>
-          </div>
+          </Link>
         ))}
       </div>
     </main>
