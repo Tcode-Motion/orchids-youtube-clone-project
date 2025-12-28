@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import type { Video, Channel } from '@/lib/supabase/types';
+import LayoutWrapper from '@/components/sections/layout-wrapper';
 import { CheckCircle2, MoreVertical, Trash2, Pause, Search, X } from 'lucide-react';
 import Link from 'next/link';
 import type { User } from '@supabase/supabase-js';
