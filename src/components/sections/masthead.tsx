@@ -589,7 +589,7 @@ function UploadModal({ onClose }: { onClose: () => void }) {
   );
 }
 
-function CreateChannelModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: () => void }) {
+function CreateChannelModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: (handle: string) => void }) {
   const [name, setName] = useState('');
   const [handle, setHandle] = useState('');
   const [creating, setCreating] = useState(false);
@@ -621,7 +621,7 @@ function CreateChannelModal({ onClose, onSuccess }: { onClose: () => void; onSuc
     setCreating(false);
     
     if (!error) {
-      onSuccess();
+      onSuccess(handleWithAt);
     }
   };
 
