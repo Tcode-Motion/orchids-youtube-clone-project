@@ -8,15 +8,34 @@ import MobileNav from "@/components/sections/mobile-nav";
 import { cn } from '@/lib/utils';
 
 export default function LayoutWrapper({ children }: { children: React.ReactNode }) {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  // Default to open on desktop (lg), closed on mobile
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const pathname = usePathname();
   
+  // Detect screen size for initial state
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 1024) {
+        setSidebarOpen(false);
+      } else {
+        setSidebarOpen(true);
+      }
+    };
+    
+    // Set initial state
+    handleResize();
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   // Close sidebar on navigation on mobile
   useEffect(() => {
-    setSidebarOpen(false);
+    if (window.innerWidth < 1024) {
+      setSidebarOpen(false);
+    }
   }, [pathname]);
 
-  // Determine if we should show the sidebar/masthead (e.g., hide on auth pages or watch page might have different layout)
   const isAuthPage = pathname?.startsWith('/auth');
   const isShortsPage = pathname?.startsWith('/shorts');
   const isWatchPage = pathname?.startsWith('/watch');
@@ -25,22 +44,21 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
 
   return (
     <div className="flex flex-col min-h-screen bg-white">
-      {!isShortsPage && (
-        <Masthead onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
-      )}
+      {/* Masthead is always visible except on auth pages */}
+      <Masthead onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
       
       <div className={cn(
-        "flex flex-1",
-        !isShortsPage && "pt-[56px]"
+        "flex flex-1 pt-[56px]",
       )}>
+        {/* Sidebar is hidden on shorts page but the wrapper should still handle it */}
         {!isShortsPage && (
           <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
         )}
         
         <main className={cn(
-          "flex-1 w-full",
-          !isShortsPage && "lg:pl-[240px]", // Default desktop sidebar width
-          !isShortsPage && !sidebarOpen && "lg:pl-[72px]" // Mini sidebar width
+          "flex-1 w-full transition-all duration-300",
+          !isShortsPage && (sidebarOpen ? "lg:pl-[240px]" : "lg:pl-[72px]"),
+          isShortsPage && "lg:pl-0" // Full width for shorts
         )}>
           {children}
         </main>
