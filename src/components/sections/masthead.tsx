@@ -419,15 +419,16 @@ const Masthead: React.FC<MastheadProps> = ({ onMenuClick }) => {
         <UploadModal onClose={() => setShowUploadModal(false)} />
       )}
 
-      {showCreateChannelModal && (
-        <CreateChannelModal 
-          onClose={() => setShowCreateChannelModal(false)} 
-          onSuccess={() => {
-            setHasChannel(true);
-            setShowCreateChannelModal(false);
-          }}
-        />
-      )}
+        {showCreateChannelModal && (
+          <CreateChannelModal 
+            onClose={() => setShowCreateChannelModal(false)} 
+            onSuccess={(handle) => {
+              setHasChannel(true);
+              setChannelHandle(handle);
+              setShowCreateChannelModal(false);
+            }}
+          />
+        )}
     </>
   );
 };
