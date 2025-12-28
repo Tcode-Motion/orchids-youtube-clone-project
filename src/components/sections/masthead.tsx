@@ -345,10 +345,10 @@ const Masthead: React.FC<MastheadProps> = ({ onMenuClick }) => {
                       </div>
 
                       <div className="px-2 space-y-1">
-                        <Link href={`/channel/${channelHandle?.replace('@', '')}`} onClick={() => setShowUserMenu(false)} className="flex items-center gap-3 px-3 py-2 hover:bg-white/5 rounded-xl transition-colors text-white/70 hover:text-white">
-                          <User size={18} />
-                          <span className="text-sm font-medium">VidStream Studio</span>
-                        </Link>
+                          <Link href={`/channel/${channelHandle?.replace('@', '')}`} onClick={() => setShowUserMenu(false)} className="flex items-center gap-3 px-3 py-2 hover:bg-white/5 rounded-xl transition-colors text-white/70 hover:text-white">
+                            <User size={18} />
+                            <span className="text-sm font-medium">VidStream Neural Studio</span>
+                          </Link>
                         <button onClick={toggleTheme} className="w-full flex items-center gap-3 px-3 py-2 hover:bg-white/5 rounded-xl transition-colors text-white/70 hover:text-white text-left">
                           {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
                           <span className="text-sm font-medium">Appearance</span>
