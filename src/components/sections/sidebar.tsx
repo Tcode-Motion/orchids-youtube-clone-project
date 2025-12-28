@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { 
   Home, 
-  PlaySquare, 
+  Video as PlaySquare, 
   Library, 
   History, 
   Clock, 
@@ -142,7 +142,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
 
   const displayedSubs = showAllSubs ? subscriptions : subscriptions.slice(0, 7);
 
-  // Full Sidebar (visible on lg when isOpen, or as overlay on md/sm when isOpen)
   const renderFullSidebar = () => (
     <div className="pt-3 pb-4 h-full bg-white overflow-y-auto scrollbar-thin hover:scrollbar-thumb-gray-300">
       <div className="flex flex-col">
@@ -306,7 +305,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
     </div>
   );
 
-  // Mini Sidebar (visible on md/lg when !isOpen)
   const renderMiniSidebar = () => (
     <div className="flex flex-col items-center py-1 bg-white h-full">
       <SidebarItem 
@@ -348,7 +346,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
 
   return (
     <>
-      {/* Overlay for mobile/tablet when full sidebar is open */}
       <div 
         className={cn(
           "fixed inset-0 bg-black/50 z-[950] transition-opacity duration-300 lg:hidden",
@@ -357,20 +354,16 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
         onClick={onClose}
       />
 
-      {/* Main Sidebar Container */}
       <aside 
         className={cn(
           "fixed top-[56px] left-0 h-[calc(100vh-56px)] bg-white z-[960] transition-all duration-300 ease-in-out",
-          // Mobile & Tablet: always hidden unless open
           isOpen ? "translate-x-0 w-[240px]" : "-translate-x-full w-[240px] lg:translate-x-0 lg:w-[72px]",
-          // Desktop: toggle between 240px and 72px
           "hidden md:block" 
         )}
       >
         {isOpen ? renderFullSidebar() : renderMiniSidebar()}
       </aside>
 
-      {/* Mobile Drawer (always full width menu when open) */}
       <aside 
         className={cn(
           "md:hidden fixed top-[56px] left-0 h-[calc(100vh-56px)] bg-white z-[960] transition-transform duration-300 w-[240px]",

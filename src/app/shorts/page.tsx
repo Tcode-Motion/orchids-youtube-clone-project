@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase/client';
-import { ThumbsUp, ThumbsDown, MessageCircle, Share2, MoreVertical, Volume2, VolumeX, Play, Pause, ChevronUp, ChevronDown, CheckCircle2, ArrowLeft } from 'lucide-react';
+import { ThumbsUp, ThumbsDown, MessageCircle, Share2, MoreVertical, Volume2, VolumeX, Play, Pause, ChevronUp, ChevronDown, CheckCircle2, ArrowLeft, Video } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
@@ -158,7 +158,7 @@ export default function ShortsPage() {
             <ArrowLeft size={24} />
           </button>
           <div className="flex items-center gap-2 text-white font-bold text-xl">
-            <PlaySquare className="text-red-600" fill="currentColor" size={24} />
+            <Video className="text-red-600" fill="currentColor" size={24} />
             Shorts
           </div>
         </div>
