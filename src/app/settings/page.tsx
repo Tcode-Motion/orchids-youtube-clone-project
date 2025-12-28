@@ -320,38 +320,71 @@ export default function SettingsPage() {
               </div>
             )}
 
-            {activeSection === 'appearance' && (
-              <div className="space-y-6">
-                <h2 className="text-lg font-semibold">Appearance</h2>
-                <p className="text-sm text-[#606060]">Adjust the appearance of VidStream across this browser</p>
-                <div className="grid grid-cols-3 gap-4 mt-4">
-                  <button
-                    onClick={() => saveSettings({ theme: 'light' })}
-                    disabled={!user}
-                    className={`p-4 rounded-xl border-2 transition-colors ${settings.theme === 'light' ? 'border-[#065fd4] bg-[#e8f0fe]' : 'border-[#e5e5e5] hover:bg-[#f2f2f2]'} ${!user ? 'opacity-50 cursor-not-allowed' : ''}`}
-                  >
-                    <Sun size={24} className="mx-auto mb-2" />
-                    <span className="text-sm font-medium">Light</span>
-                  </button>
-                  <button
-                    onClick={() => saveSettings({ theme: 'dark' })}
-                    disabled={!user}
-                    className={`p-4 rounded-xl border-2 transition-colors ${settings.theme === 'dark' ? 'border-[#065fd4] bg-[#e8f0fe]' : 'border-[#e5e5e5] hover:bg-[#f2f2f2]'} ${!user ? 'opacity-50 cursor-not-allowed' : ''}`}
-                  >
-                    <Moon size={24} className="mx-auto mb-2" />
-                    <span className="text-sm font-medium">Dark</span>
-                  </button>
-                  <button
-                    onClick={() => saveSettings({ theme: 'system' })}
-                    disabled={!user}
-                    className={`p-4 rounded-xl border-2 transition-colors ${settings.theme === 'system' ? 'border-[#065fd4] bg-[#e8f0fe]' : 'border-[#e5e5e5] hover:bg-[#f2f2f2]'} ${!user ? 'opacity-50 cursor-not-allowed' : ''}`}
-                  >
-                    <Monitor size={24} className="mx-auto mb-2" />
-                    <span className="text-sm font-medium">System</span>
-                  </button>
+              {activeSection === 'appearance' && (
+                <div className="space-y-6">
+                  <h2 className="text-lg font-semibold">Appearance</h2>
+                  <p className="text-sm text-[#606060]">Adjust the appearance of VidStream across this browser</p>
+                  <div className="grid grid-cols-3 gap-4 mt-4">
+                    <button
+                      onClick={() => saveSettings({ theme: 'light' })}
+                      disabled={!user}
+                      className={`p-4 rounded-xl border-2 transition-colors ${settings.theme === 'light' ? 'border-[#065fd4] bg-[#e8f0fe]' : 'border-[#e5e5e5] hover:bg-[#f2f2f2]'} ${!user ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    >
+                      <Sun size={24} className="mx-auto mb-2" />
+                      <span className="text-sm font-medium">Light</span>
+                    </button>
+                    <button
+                      onClick={() => saveSettings({ theme: 'dark' })}
+                      disabled={!user}
+                      className={`p-4 rounded-xl border-2 transition-colors ${settings.theme === 'dark' ? 'border-[#065fd4] bg-[#e8f0fe]' : 'border-[#e5e5e5] hover:bg-[#f2f2f2]'} ${!user ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    >
+                      <Moon size={24} className="mx-auto mb-2" />
+                      <span className="text-sm font-medium">Dark</span>
+                    </button>
+                    <button
+                      onClick={() => saveSettings({ theme: 'system' })}
+                      disabled={!user}
+                      className={`p-4 rounded-xl border-2 transition-colors ${settings.theme === 'system' ? 'border-[#065fd4] bg-[#e8f0fe]' : 'border-[#e5e5e5] hover:bg-[#f2f2f2]'} ${!user ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    >
+                      <Monitor size={24} className="mx-auto mb-2" />
+                      <span className="text-sm font-medium">System</span>
+                    </button>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+
+              {activeSection === 'creator' && (
+                <div className="space-y-6">
+                  <h2 className="text-lg font-semibold">Creator Studio</h2>
+                  <div className="space-y-4">
+                    <div className="p-6 bg-[#f9f9f9] rounded-xl border border-dashed border-[#ccc] text-center">
+                      <Video size={48} className="mx-auto mb-4 text-[#606060]" />
+                      <h3 className="text-lg font-medium mb-2">Ready to start creating?</h3>
+                      <p className="text-sm text-[#606060] mb-6">Upload videos or go live to start building your audience on VidStream.</p>
+                      <div className="flex flex-wrap justify-center gap-4">
+                        <button className="px-6 py-2 bg-[#065fd4] text-white rounded-full font-medium text-sm hover:bg-[#0556be]">
+                          Go to Studio
+                        </button>
+                        <button className="px-6 py-2 border border-[#ccc] text-[#0f0f0f] rounded-full font-medium text-sm hover:bg-[#f2f2f2]">
+                          View Analytics
+                        </button>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="p-4 border border-[#e5e5e5] rounded-xl">
+                        <h4 className="font-medium mb-1 text-sm">Latest Performance</h4>
+                        <p className="text-2xl font-bold">124.5K</p>
+                        <p className="text-xs text-green-600 font-medium">+12% from last month</p>
+                      </div>
+                      <div className="p-4 border border-[#e5e5e5] rounded-xl">
+                        <h4 className="font-medium mb-1 text-sm">Total Subscribers</h4>
+                        <p className="text-2xl font-bold">8,421</p>
+                        <p className="text-xs text-green-600 font-medium">+243 this week</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
 
             {activeSection === 'language' && (
               <div className="space-y-6">
