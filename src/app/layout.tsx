@@ -6,8 +6,8 @@ import Script from "next/script";
 import LayoutWrapper from "@/components/sections/layout-wrapper";
 
 export const metadata: Metadata = {
-  title: "YouTube Clone",
-  description: "A YouTube clone built with Next.js and Supabase",
+  title: "VidStream",
+  description: "A high-performance video streaming platform built with Next.js and Supabase",
 };
 
 export default function RootLayout({
