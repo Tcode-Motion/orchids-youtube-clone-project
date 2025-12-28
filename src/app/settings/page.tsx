@@ -9,14 +9,15 @@ import {
   Shield, 
   Globe, 
   Palette, 
-  Play, 
-  Download,
-  ChevronRight,
-  Moon,
-  Sun,
-  Monitor,
-  Check
-} from 'lucide-react';
+    Play, 
+    Download,
+    ChevronRight,
+    Moon,
+    Sun,
+    Monitor,
+    Check,
+    Video
+  } from 'lucide-react';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 
 interface SettingsSection {
