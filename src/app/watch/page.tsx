@@ -239,9 +239,8 @@ function WatchContent() {
 
   if (loading) {
     return (
-      <div className="flex flex-col min-h-screen bg-[#050505]">
-        <Masthead />
-        <div className="pt-18 flex flex-col lg:flex-row gap-8 p-6 max-w-[1800px] mx-auto w-full">
+      <div className="flex flex-col min-h-screen bg-background">
+        <div className="flex flex-col lg:flex-row gap-8 p-6 max-w-[1800px] mx-auto w-full">
           <div className="flex-1">
             <div className="aspect-video bg-white/5 rounded-[32px] animate-pulse" />
             <div className="mt-6 h-8 bg-white/5 rounded-2xl animate-pulse w-3/4" />
