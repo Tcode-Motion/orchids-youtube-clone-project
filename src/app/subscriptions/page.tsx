@@ -256,86 +256,90 @@ export default function SubscriptionsPage() {
                 <p className="text-[#606060]">No videos from your subscriptions yet</p>
               </div>
             ) : (
-              <div className={view === 'grid' 
-                ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-8"
-                : "space-y-4"
-              }>
-                {videos.map((video) => (
-                  view === 'grid' ? (
-                    <Link href={`/watch?v=${video.id}`} key={video.id} className="group">
-                      <div className="relative aspect-video rounded-xl overflow-hidden bg-gray-200">
-                        <img
-                          src={video.thumbnail_url || 'https://picsum.photos/seed/default/320/180'}
-                          alt={video.title}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                        />
-                        {video.is_live ? (
-                          <span className="absolute bottom-2 left-2 bg-[#cc0000] text-white text-xs font-medium px-1.5 py-0.5 rounded-sm uppercase flex items-center gap-1">
-                            <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
-                            Live
-                          </span>
-                        ) : (
+                <div className={view === 'grid' 
+                  ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-8"
+                  : "space-y-4"
+                }>
+                  {videos.map((video) => (
+                    view === 'grid' ? (
+                      <div key={video.id} className="group">
+                        <Link href={`/watch?v=${video.id}`} className="relative aspect-video rounded-xl overflow-hidden bg-gray-200 block">
+                          <img
+                            src={video.thumbnail_url || 'https://picsum.photos/seed/default/320/180'}
+                            alt={video.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                          />
+                          {video.is_live ? (
+                            <span className="absolute bottom-2 left-2 bg-[#cc0000] text-white text-xs font-medium px-1.5 py-0.5 rounded-sm uppercase flex items-center gap-1">
+                              <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
+                              Live
+                            </span>
+                          ) : (
+                            <span className="absolute bottom-2 right-2 bg-black/80 text-white text-xs font-medium px-1 py-0.5 rounded">
+                              {formatDuration(video.duration)}
+                            </span>
+                          )}
+                        </Link>
+                        <div className="mt-3 flex gap-3">
+                          <Link href={`/channel/${video.channel?.handle?.replace('@', '')}`}>
+                            <img 
+                              src={video.channel?.avatar_url || 'https://picsum.photos/seed/default/36/36'}
+                              alt={video.channel?.name}
+                              className="w-9 h-9 rounded-full"
+                            />
+                          </Link>
+                          <div className="flex-1 min-w-0">
+                            <Link href={`/watch?v=${video.id}`}>
+                              <h3 className="text-sm font-medium text-[#0f0f0f] line-clamp-2 leading-5">
+                                {video.title}
+                              </h3>
+                            </Link>
+                            <Link href={`/channel/${video.channel?.handle?.replace('@', '')}`} className="flex items-center gap-1 mt-1 hover:text-[#0f0f0f]">
+                              <span className="text-xs text-[#606060]">{video.channel?.name}</span>
+                              {video.channel?.is_verified && <CheckCircle2 size={12} className="text-[#606060]" />}
+                            </Link>
+                            <p className="text-xs text-[#606060]">
+                              {formatViews(video.view_count)} views • {timeAgo(video.published_at)}
+                            </p>
+                          </div>
+                          <button 
+                            onClick={(e) => e.preventDefault()}
+                            className="opacity-0 group-hover:opacity-100 p-1 hover:bg-[#e5e5e5] rounded-full h-fit"
+                          >
+                            <MoreVertical size={20} />
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div key={video.id} className="flex gap-4 group">
+                        <Link href={`/watch?v=${video.id}`} className="relative w-[246px] aspect-video rounded-xl overflow-hidden bg-gray-200 shrink-0 block">
+                          <img
+                            src={video.thumbnail_url || 'https://picsum.photos/seed/default/246/138'}
+                            alt={video.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                          />
                           <span className="absolute bottom-2 right-2 bg-black/80 text-white text-xs font-medium px-1 py-0.5 rounded">
                             {formatDuration(video.duration)}
                           </span>
-                        )}
-                      </div>
-                      <div className="mt-3 flex gap-3">
-                        <Link href={`/channel/${video.channel?.handle?.replace('@', '')}`}>
-                          <img 
-                            src={video.channel?.avatar_url || 'https://picsum.photos/seed/default/36/36'}
-                            alt={video.channel?.name}
-                            className="w-9 h-9 rounded-full"
-                          />
                         </Link>
                         <div className="flex-1 min-w-0">
-                          <h3 className="text-sm font-medium text-[#0f0f0f] line-clamp-2 leading-5">
-                            {video.title}
-                          </h3>
-                          <div className="flex items-center gap-1 mt-1">
+                          <Link href={`/watch?v=${video.id}`}>
+                            <h3 className="text-base font-medium text-[#0f0f0f] line-clamp-2 pr-6">
+                              {video.title}
+                            </h3>
+                          </Link>
+                          <Link href={`/channel/${video.channel?.handle?.replace('@', '')}`} className="flex items-center gap-1 mt-1 hover:text-[#0f0f0f]">
                             <span className="text-xs text-[#606060]">{video.channel?.name}</span>
                             {video.channel?.is_verified && <CheckCircle2 size={12} className="text-[#606060]" />}
-                          </div>
+                          </Link>
                           <p className="text-xs text-[#606060]">
                             {formatViews(video.view_count)} views • {timeAgo(video.published_at)}
                           </p>
                         </div>
-                        <button 
-                          onClick={(e) => e.preventDefault()}
-                          className="opacity-0 group-hover:opacity-100 p-1 hover:bg-[#e5e5e5] rounded-full h-fit"
-                        >
-                          <MoreVertical size={20} />
-                        </button>
                       </div>
-                    </Link>
-                  ) : (
-                    <Link href={`/watch?v=${video.id}`} key={video.id} className="flex gap-4 group">
-                      <div className="relative w-[246px] aspect-video rounded-xl overflow-hidden bg-gray-200 shrink-0">
-                        <img
-                          src={video.thumbnail_url || 'https://picsum.photos/seed/default/246/138'}
-                          alt={video.title}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                        />
-                        <span className="absolute bottom-2 right-2 bg-black/80 text-white text-xs font-medium px-1 py-0.5 rounded">
-                          {formatDuration(video.duration)}
-                        </span>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-base font-medium text-[#0f0f0f] line-clamp-2 pr-6">
-                          {video.title}
-                        </h3>
-                        <div className="flex items-center gap-1 mt-1">
-                          <span className="text-xs text-[#606060]">{video.channel?.name}</span>
-                          {video.channel?.is_verified && <CheckCircle2 size={12} className="text-[#606060]" />}
-                        </div>
-                        <p className="text-xs text-[#606060]">
-                          {formatViews(video.view_count)} views • {timeAgo(video.published_at)}
-                        </p>
-                      </div>
-                    </Link>
-                  )
-                ))}
-              </div>
+                    )
+                  ))}
+                </div>
             )}
           </div>
         </main>
