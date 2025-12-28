@@ -206,12 +206,23 @@ function WatchContent() {
     if (newLiked === null) {
       await supabase.from('video_likes').delete().eq('user_id', user.id).eq('video_id', videoId);
     } else {
-      await supabase.from('video_likes').upsert({
-        user_id: user.id,
-        video_id: videoId,
-        is_like: newLiked,
-        created_at: new Date().toISOString()
-      }, { onConflict: 'user_id,video_id' });
+      const { data: existing } = await supabase.from('video_likes')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('video_id', videoId)
+          .single();
+        
+        if (existing) {
+          await supabase.from('video_likes')
+            .update({ is_like: newLiked })
+            .eq('id', existing.id);
+        } else {
+          await supabase.from('video_likes').insert({
+            user_id: user.id,
+            video_id: videoId,
+            is_like: newLiked
+          });
+        }
     }
   };
 
