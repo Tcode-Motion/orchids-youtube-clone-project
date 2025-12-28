@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function AuthPage() {
   const router = useRouter();
@@ -58,108 +59,134 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white flex flex-col items-center justify-center px-4">
-      <div className="w-full max-w-[400px]">
-        <div className="flex justify-center mb-6">
-          <svg viewBox="0 0 90 20" className="w-[90px] h-5">
-            <g>
-              <path d="M27.9727 3.12324C27.6435 1.89323 26.6768 0.926623 25.4468 0.597366C23.2197 2.24288e-07 14.285 0 14.285 0C14.285 0 5.35042 2.24288e-07 3.12323 0.597366C1.89323 0.926623 0.926623 1.89323 0.597366 3.12324C2.24288e-07 5.35042 0 10 0 10C0 10 2.24288e-07 14.6496 0.597366 16.8768C0.926623 18.1068 1.89323 19.0734 3.12323 19.4026C5.35042 20 14.285 20 14.285 20C14.285 20 23.2197 20 25.4468 19.4026C26.6768 19.0734 27.6435 18.1068 27.9727 16.8768C28.5701 14.6496 28.5701 10 28.5701 10C28.5701 10 28.5677 5.35042 27.9727 3.12324Z" fill="#FF0000"></path>
-              <path d="M11.4253 14.2854L18.8477 10.0004L11.4253 5.71533V14.2854Z" fill="white"></path>
-            </g>
-          </svg>
-        </div>
+    <div className="min-h-screen bg-[#050505] flex flex-col items-center justify-center px-4 relative overflow-hidden">
+      {/* Background Glows */}
+      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-500/10 blur-[120px] rounded-full pointer-events-none" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-500/10 blur-[120px] rounded-full pointer-events-none" />
 
-        <h1 className="text-2xl font-normal text-center text-[#202124] mb-2">
-          {isSignUp ? 'Create your VidStream Account' : 'Sign in'}
-        </h1>
-        <p className="text-center text-[#5f6368] mb-8">
-          {isSignUp ? 'to continue to VidStream' : 'to continue to VidStream'}
-        </p>
-
-        {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
-            {error}
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="w-full max-w-[440px] z-10"
+      >
+        <div className="bg-white/[0.03] border border-white/10 backdrop-blur-xl rounded-3xl p-8 shadow-2xl">
+          <div className="flex flex-col items-center mb-10">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-[0_0_20px_rgba(79,70,229,0.4)]">
+                <svg viewBox="0 0 24 24" className="w-6 h-6 text-white fill-current">
+                  <path d="M8 5v14l11-7z" />
+                </svg>
+              </div>
+              <span className="text-2xl font-bold tracking-tighter text-white">VidStream</span>
+            </div>
+            
+            <h1 className="text-3xl font-bold text-white tracking-tight">
+              {isSignUp ? 'Neural Entry' : 'Relay Access'}
+            </h1>
+            <p className="text-white/40 mt-2 text-sm">
+              {isSignUp ? 'Establish your digital identity' : 'Authenticate to continue to the stream'}
+            </p>
           </div>
-        )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {isSignUp && (
-            <div>
-              <label className="block text-sm text-[#5f6368] mb-1">Name</label>
+          <AnimatePresence mode="wait">
+            {error && (
+              <motion.div 
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm flex items-center gap-3"
+              >
+                <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                {error}
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {isSignUp && (
+              <div className="space-y-1.5">
+                <label className="text-[13px] font-medium text-white/50 px-1">Display Name</label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required={isSignUp}
+                  className="w-full px-4 py-3.5 bg-white/[0.03] border border-white/10 rounded-2xl text-white placeholder:text-white/20 focus:outline-none focus:border-indigo-500/50 focus:ring-4 focus:ring-indigo-500/5 transition-all"
+                  placeholder="The Creator"
+                />
+              </div>
+            )}
+
+            <div className="space-y-1.5">
+              <label className="text-[13px] font-medium text-white/50 px-1">Email Protocol</label>
               <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required={isSignUp}
-                className="w-full px-4 py-3 border border-[#dadce0] rounded-lg focus:outline-none focus:border-[#1a73e8] focus:ring-1 focus:ring-[#1a73e8]"
-                placeholder="Enter your name"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="w-full px-4 py-3.5 bg-white/[0.03] border border-white/10 rounded-2xl text-white placeholder:text-white/20 focus:outline-none focus:border-indigo-500/50 focus:ring-4 focus:ring-indigo-500/5 transition-all"
+                placeholder="name@relay.com"
               />
             </div>
-          )}
 
-          <div>
-            <label className="block text-sm text-[#5f6368] mb-1">Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="w-full px-4 py-3 border border-[#dadce0] rounded-lg focus:outline-none focus:border-[#1a73e8] focus:ring-1 focus:ring-[#1a73e8]"
-              placeholder="Enter your email"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm text-[#5f6368] mb-1">Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              className="w-full px-4 py-3 border border-[#dadce0] rounded-lg focus:outline-none focus:border-[#1a73e8] focus:ring-1 focus:ring-[#1a73e8]"
-              placeholder="Enter your password"
-            />
-          </div>
-
-          {isSignUp && (
-            <div>
-              <label className="block text-sm text-[#5f6368] mb-1">Confirm Password</label>
+            <div className="space-y-1.5">
+              <label className="text-[13px] font-medium text-white/50 px-1">Access Key</label>
               <input
                 type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                required={isSignUp}
-                className="w-full px-4 py-3 border border-[#dadce0] rounded-lg focus:outline-none focus:border-[#1a73e8] focus:ring-1 focus:ring-[#1a73e8]"
-                placeholder="Confirm your password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="w-full px-4 py-3.5 bg-white/[0.03] border border-white/10 rounded-2xl text-white placeholder:text-white/20 focus:outline-none focus:border-indigo-500/50 focus:ring-4 focus:ring-indigo-500/5 transition-all"
+                placeholder="••••••••"
               />
             </div>
-          )}
 
-          <div className="flex items-center justify-between pt-4">
-            <button
-              type="button"
-              onClick={() => {
-                setIsSignUp(!isSignUp);
-                setError('');
-              }}
-              className="text-[#1a73e8] font-medium hover:bg-[#e8f0fe] px-2 py-1 rounded"
-            >
-              {isSignUp ? 'Sign in instead' : 'Create account'}
-            </button>
-            <button
-              type="submit"
-              disabled={loading}
-              className="px-6 py-2 bg-[#1a73e8] text-white font-medium rounded-lg hover:bg-[#1557b0] disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? 'Please wait...' : isSignUp ? 'Sign up' : 'Sign in'}
-            </button>
-          </div>
-        </form>
+            {isSignUp && (
+              <div className="space-y-1.5">
+                <label className="text-[13px] font-medium text-white/50 px-1">Confirm Access Key</label>
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required={isSignUp}
+                  className="w-full px-4 py-3.5 bg-white/[0.03] border border-white/10 rounded-2xl text-white placeholder:text-white/20 focus:outline-none focus:border-indigo-500/50 focus:ring-4 focus:ring-indigo-500/5 transition-all"
+                  placeholder="••••••••"
+                />
+              </div>
+            )}
 
-        <div className="mt-8 text-center text-sm text-[#5f6368]">
-          <p>Demo: Use any email and password to test</p>
+            <div className="pt-4 space-y-4">
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-4 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-2xl shadow-[0_0_20px_rgba(79,70,229,0.3)] hover:shadow-[0_0_30px_rgba(79,70,229,0.5)] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {loading ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    <span>Synchronizing...</span>
+                  </>
+                ) : isSignUp ? 'Initiate Account' : 'Establish Connection'}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setIsSignUp(!isSignUp);
+                  setError('');
+                }}
+                className="w-full py-2 text-white/40 hover:text-white text-[13px] font-medium transition-colors"
+              >
+                {isSignUp ? 'Already have an access key? Sign in' : "New to the stream? Request entry"}
+              </button>
+            </div>
+          </form>
         </div>
-      </div>
+
+        <p className="mt-8 text-center text-white/20 text-xs">
+          Secure end-to-end authentication provided by VidStream Neural Network
+        </p>
+      </motion.div>
     </div>
   );
 }
