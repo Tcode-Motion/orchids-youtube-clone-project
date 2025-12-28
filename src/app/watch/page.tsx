@@ -126,32 +126,46 @@ function WatchContent() {
     fetchVideo();
   }, [videoId]);
 
-  const handleSubmitComment = async () => {
-    if (!commentText.trim() || !videoId) return;
-    setSubmittingComment(true);
+    const handleSubmitComment = async () => {
+      if (!commentText.trim() || !videoId) return;
+      setSubmittingComment(true);
 
-    const { data: channels } = await supabase.from('channels').select('id').limit(1);
-    const channelId = channels?.[0]?.id;
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setSubmittingComment(false);
+        return;
+      }
 
-    if (channelId) {
-      const { data: newComment } = await supabase
-        .from('comments')
-        .insert({
-          video_id: videoId,
-          channel_id: channelId,
-          content: commentText.trim(),
-          like_count: 0
-        })
-        .select(`*, channel:channels(*)`)
+      const { data: channelData } = await supabase
+        .from('channels')
+        .select('id')
+        .eq('user_id', user.id)
         .single();
 
-      if (newComment) {
-        setComments([newComment as (Comment & { channel: Channel }), ...comments]);
-        setCommentText('');
+      const channelId = channelData?.id;
+
+      if (channelId) {
+        const { data: newComment } = await supabase
+          .from('comments')
+          .insert({
+            video_id: videoId,
+            channel_id: channelId,
+            content: commentText.trim(),
+            like_count: 0
+          })
+          .select(`*, channel:channels(*)`)
+          .single();
+
+        if (newComment) {
+          setComments([newComment as (Comment & { channel: Channel }), ...comments]);
+          setCommentText('');
+        }
+      } else {
+        // Prompt to create channel
+        alert('You need to create a channel to comment.');
       }
-    }
-    setSubmittingComment(false);
-  };
+      setSubmittingComment(false);
+    };
 
   const handleDownload = () => {
     if (video?.video_url) {
