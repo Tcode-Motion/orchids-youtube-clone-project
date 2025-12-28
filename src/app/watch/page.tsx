@@ -308,40 +308,40 @@ function WatchContent() {
             </div>
 
             <div className="space-y-4">
-              {[...Array(5)].map((_, i) => (
-                <div key={i} className="flex gap-4">
-                  <img 
-                    src={`https://picsum.photos/seed/user${i}/40/40`}
-                    alt="User"
-                    className="w-10 h-10 rounded-full"
-                  />
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium">@user{i + 1}</span>
-                      <span className="text-xs text-[#606060]">{i + 1} days ago</span>
-                    </div>
-                    <p className="text-sm mt-1">
-                      {['Great video! Really enjoyed watching this.',
-                        'This is exactly what I was looking for. Thanks!',
-                        'Amazing content as always. Keep it up!',
-                        'I learned so much from this video.',
-                        'This deserves way more views!'][i]}
-                    </p>
-                    <div className="flex items-center gap-4 mt-2">
-                      <button className="flex items-center gap-1 text-sm text-[#606060] hover:text-[#0f0f0f]">
-                        <ThumbsUp size={16} />
-                        <span>{Math.floor(Math.random() * 100)}</span>
-                      </button>
-                      <button className="text-[#606060] hover:text-[#0f0f0f]">
-                        <ThumbsDown size={16} />
-                      </button>
-                      <button className="text-sm font-medium text-[#606060] hover:text-[#0f0f0f]">
-                        Reply
-                      </button>
+              {comments.length === 0 ? (
+                <p className="text-[#606060] text-sm italic">No comments yet. Be the first to comment!</p>
+              ) : (
+                comments.map((comment, i) => (
+                  <div key={comment.id} className="flex gap-4">
+                    <img 
+                      src={comment.channel?.avatar_url || `https://picsum.photos/seed/user${i}/40/40`}
+                      alt={comment.channel?.name || 'User'}
+                      className="w-10 h-10 rounded-full"
+                    />
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium">{comment.channel?.handle || `@user${i+1}`}</span>
+                        <span className="text-xs text-[#606060]">{timeAgo(comment.created_at || new Date().toISOString())}</span>
+                      </div>
+                      <p className="text-sm mt-1 whitespace-pre-wrap">
+                        {comment.content}
+                      </p>
+                      <div className="flex items-center gap-4 mt-2">
+                        <button className="flex items-center gap-1 text-sm text-[#606060] hover:text-[#0f0f0f]">
+                          <ThumbsUp size={16} />
+                          <span>{comment.like_count || 0}</span>
+                        </button>
+                        <button className="text-[#606060] hover:text-[#0f0f0f]">
+                          <ThumbsDown size={16} />
+                        </button>
+                        <button className="text-sm font-medium text-[#606060] hover:text-[#0f0f0f]">
+                          Reply
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
         </div>
