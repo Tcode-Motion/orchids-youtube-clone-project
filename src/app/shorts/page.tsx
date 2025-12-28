@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase/client';
-import { ThumbsUp, ThumbsDown, MessageCircle, Share2, MoreVertical, Volume2, VolumeX, Play, Pause, ChevronUp, ChevronDown, CheckCircle2 } from 'lucide-react';
+import { ThumbsUp, ThumbsDown, MessageCircle, Share2, MoreVertical, Volume2, VolumeX, Play, Pause, ChevronUp, ChevronDown, CheckCircle2, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 interface Short {
   id: string;
@@ -34,6 +35,7 @@ function formatCount(count: number): string {
 }
 
 export default function ShortsPage() {
+  const router = useRouter();
   const [shorts, setShorts] = useState<Short[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -41,7 +43,7 @@ export default function ShortsPage() {
   const [playing, setPlaying] = useState(true);
   const [subscribed, setSubscribed] = useState<Record<string, boolean>>({});
   const [liked, setLiked] = useState<Record<string, boolean>>({});
-  const containerRef = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     async function fetchShorts() {
@@ -52,19 +54,20 @@ export default function ShortsPage() {
           channel:channels(*)
         `)
         .eq('is_short', true)
-        .order('view_count', { ascending: false })
+        .order('published_at', { ascending: false })
         .limit(20);
       
       if (data && data.length > 0) {
         setShorts(data as Short[]);
       } else {
+        // Fallback to latest videos if no shorts found
         const { data: fallbackData } = await supabase
           .from('videos')
           .select(`
             *,
             channel:channels(*)
           `)
-          .order('view_count', { ascending: false })
+          .order('published_at', { ascending: false })
           .limit(20);
         
         if (fallbackData) {
@@ -76,22 +79,34 @@ export default function ShortsPage() {
     fetchShorts();
   }, []);
 
+  useEffect(() => {
+    if (videoRef.current) {
+      if (playing) {
+        videoRef.current.play().catch(() => setPlaying(false));
+      } else {
+        videoRef.current.pause();
+      }
+    }
+  }, [playing, currentIndex]);
+
   const goToNext = () => {
     if (currentIndex < shorts.length - 1) {
       setCurrentIndex(currentIndex + 1);
+      setPlaying(true);
     }
   };
 
   const goToPrev = () => {
     if (currentIndex > 0) {
       setCurrentIndex(currentIndex - 1);
+      setPlaying(true);
     }
   };
 
   const handleKeyDown = (e: KeyboardEvent) => {
-    if (e.key === 'ArrowDown' || e.key === 'j') goToNext();
-    if (e.key === 'ArrowUp' || e.key === 'k') goToPrev();
-    if (e.key === ' ' || e.key === 'k') {
+    if (e.key === 'ArrowDown') goToNext();
+    if (e.key === 'ArrowUp') goToPrev();
+    if (e.key === ' ') {
       e.preventDefault();
       setPlaying(!playing);
     }
@@ -103,11 +118,6 @@ export default function ShortsPage() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [currentIndex, playing, muted, shorts.length]);
 
-  const handleWheel = (e: React.WheelEvent) => {
-    if (e.deltaY > 0) goToNext();
-    else goToPrev();
-  };
-
   const toggleSubscribe = (channelId: string) => {
     setSubscribed(prev => ({ ...prev, [channelId]: !prev[channelId] }));
   };
@@ -118,7 +128,7 @@ export default function ShortsPage() {
 
   if (loading) {
     return (
-      <div className="fixed inset-0 bg-black flex items-center justify-center">
+      <div className="fixed inset-0 bg-black flex items-center justify-center z-[2000]">
         <div className="w-12 h-12 border-4 border-white/30 border-t-white rounded-full animate-spin" />
       </div>
     );
@@ -126,168 +136,158 @@ export default function ShortsPage() {
 
   if (shorts.length === 0) {
     return (
-      <div className="fixed inset-0 bg-black flex flex-col items-center justify-center text-white">
+      <div className="fixed inset-0 bg-black flex flex-col items-center justify-center text-white z-[2000]">
         <p className="text-xl">No Shorts available</p>
-        <Link href="/" className="mt-4 text-blue-400 hover:underline">Go back home</Link>
+        <button onClick={() => router.back()} className="mt-4 text-blue-400 hover:underline">Go back</button>
       </div>
     );
   }
 
   const currentShort = shorts[currentIndex];
+  // Use a reliable placeholder video if the URL is dummy
+  const videoUrl = currentShort.video_url?.includes('example.com') 
+    ? 'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4' 
+    : currentShort.video_url;
 
   return (
-    <div 
-      ref={containerRef}
-      onWheel={handleWheel}
-      className="fixed inset-0 bg-black flex items-center justify-center overflow-hidden"
-    >
-      <div className="absolute top-4 left-4 z-50">
-        <Link href="/" className="text-white flex items-center gap-2">
-          <svg viewBox="0 0 90 20" className="w-20 h-5 fill-white">
-            <path d="M27.9727 3.12324C27.6435 1.89323 26.6768 0.926623 25.4468 0.597366C23.2197 2.24288e-07 14.285 0 14.285 0C14.285 0 5.35042 2.24288e-07 3.12323 0.597366C1.89323 0.926623 0.926623 1.89323 0.597366 3.12324C2.24288e-07 5.35042 0 10 0 10C0 10 2.24288e-07 14.6496 0.597366 16.8768C0.926623 18.1068 1.89323 19.0734 3.12323 19.4026C5.35042 20 14.285 20 14.285 20C14.285 20 23.2197 20 25.4468 19.4026C26.6768 19.0734 27.6435 18.1068 27.9727 16.8768C28.5701 14.6496 28.5701 10 28.5701 10C28.5701 10 28.5677 5.35042 27.9727 3.12324Z" fill="#FF0000"/>
-            <path d="M11.4253 14.2854L18.8477 10.0004L11.4253 5.71533V14.2854Z" fill="white"/>
-            <path d="M34.6024 19.4328V1.60164H38.4069V15.8949H45.8812V19.4328H34.6024Z" fill="white"/>
-            <path d="M46.4062 19.4328V1.60164H50.2107V19.4328H46.4062Z" fill="white"/>
-            <path d="M57.2091 19.4328L51.3871 1.60164H55.5148L59.2298 14.2187L62.9448 1.60164H67.0724L61.2505 19.4328H57.2091Z" fill="white"/>
-            <path d="M68.4185 19.4328V1.60164H79.1574V5.13949H72.2231V8.67733H78.5267V12.2152H72.2231V15.8949H79.4493V19.4328H68.4185Z" fill="white"/>
-          </svg>
-          <span className="font-semibold text-lg">Shorts</span>
-        </Link>
-      </div>
-
-      <div className="absolute top-4 right-4 z-50 hidden sm:flex items-center gap-2">
-        <button 
-          onClick={() => setMuted(!muted)}
-          className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
-        >
-          {muted ? <VolumeX size={20} className="text-white" /> : <Volume2 size={20} className="text-white" />}
-        </button>
-      </div>
-
-      <div className="relative w-full h-full max-w-[400px] max-h-[90vh] flex items-center">
-        <div className="relative w-full h-full bg-[#0f0f0f] rounded-xl overflow-hidden">
-          <div 
-            className="absolute inset-0 bg-cover bg-center"
-            style={{ backgroundImage: `url(${currentShort.thumbnail_url})` }}
+    <div className="fixed inset-0 bg-black flex items-center justify-center overflow-hidden z-[1100]">
+      {/* Header Overlay */}
+      <div className="absolute top-0 left-0 right-0 p-4 z-50 flex items-center justify-between bg-gradient-to-b from-black/60 to-transparent">
+        <div className="flex items-center gap-4">
+          <button onClick={() => router.back()} className="p-2 hover:bg-white/10 rounded-full text-white">
+            <ArrowLeft size={24} />
+          </button>
+          <div className="flex items-center gap-2 text-white font-bold text-xl">
+            <PlaySquare className="text-red-600" fill="currentColor" size={24} />
+            Shorts
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={() => setMuted(!muted)}
+            className="p-2 hover:bg-white/10 rounded-full text-white"
           >
-            <div className="absolute inset-0 bg-black/40" />
-          </div>
+            {muted ? <VolumeX size={24} /> : <Volume2 size={24} />}
+          </button>
+          <button className="p-2 hover:bg-white/10 rounded-full text-white">
+            <MoreVertical size={24} />
+          </button>
+        </div>
+      </div>
 
-          <div className="absolute inset-0 flex items-center justify-center">
-            <button 
-              onClick={() => setPlaying(!playing)}
-              className="w-16 h-16 rounded-full bg-black/50 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity"
-            >
-              {playing ? <Pause size={32} className="text-white" /> : <Play size={32} className="text-white ml-1" />}
-            </button>
-          </div>
+      {/* Main Video Container */}
+      <div className="relative w-full h-full max-w-[450px] aspect-[9/16] flex items-center bg-[#0f0f0f]">
+        <video
+          ref={videoRef}
+          src={videoUrl}
+          poster={currentShort.thumbnail_url}
+          loop
+          muted={muted}
+          playsInline
+          className="w-full h-full object-contain"
+          onClick={() => setPlaying(!playing)}
+        />
 
-          <div className="absolute bottom-0 left-0 right-16 p-4 bg-gradient-to-t from-black/80 to-transparent">
-            <div className="flex items-center gap-3 mb-3">
-              <Link href={`/channel/${currentShort.channel?.handle}`}>
-                <img 
-                  src={currentShort.channel?.avatar_url || 'https://picsum.photos/seed/default/40/40'}
-                  alt={currentShort.channel?.name}
-                  className="w-10 h-10 rounded-full object-cover"
-                />
-              </Link>
-              <div className="flex-1 min-w-0">
-                <Link href={`/channel/${currentShort.channel?.handle}`} className="flex items-center gap-1">
-                  <span className="text-white font-medium text-sm truncate">
-                    {currentShort.channel?.name}
-                  </span>
-                  {currentShort.channel?.is_verified && (
-                    <CheckCircle2 size={14} className="text-white/80" />
-                  )}
-                </Link>
-              </div>
-              <button 
-                onClick={() => toggleSubscribe(currentShort.channel?.id)}
-                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                  subscribed[currentShort.channel?.id] 
-                    ? 'bg-white/20 text-white' 
-                    : 'bg-white text-black hover:bg-white/90'
-                }`}
-              >
-                {subscribed[currentShort.channel?.id] ? 'Subscribed' : 'Subscribe'}
-              </button>
+        {/* Play/Pause Indicator */}
+        {!playing && (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div className="w-20 h-20 rounded-full bg-black/40 flex items-center justify-center">
+              <Play size={40} className="text-white ml-2" fill="currentColor" />
             </div>
-            <p className="text-white text-sm line-clamp-2">{currentShort.title}</p>
           </div>
+        )}
 
-          <div className="absolute right-2 bottom-20 flex flex-col items-center gap-4">
-            <button 
-              onClick={() => toggleLike(currentShort.id)}
-              className="flex flex-col items-center"
-            >
-              <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors ${
-                liked[currentShort.id] ? 'bg-white text-black' : 'bg-white/10 hover:bg-white/20'
-              }`}>
-                <ThumbsUp size={24} className={liked[currentShort.id] ? 'text-black' : 'text-white'} />
-              </div>
-              <span className="text-white text-xs mt-1">{formatCount(currentShort.like_count + (liked[currentShort.id] ? 1 : 0))}</span>
-            </button>
+        {/* Sidebar Actions */}
+        <div className="absolute right-2 bottom-24 flex flex-col items-center gap-6 z-50">
+          <button onClick={() => toggleLike(currentShort.id)} className="flex flex-col items-center group">
+            <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors ${liked[currentShort.id] ? 'bg-red-600' : 'bg-white/10 group-hover:bg-white/20'}`}>
+              <ThumbsUp size={24} className="text-white" fill={liked[currentShort.id] ? "currentColor" : "none"} />
+            </div>
+            <span className="text-white text-xs mt-1 font-medium">{formatCount(currentShort.like_count + (liked[currentShort.id] ? 1 : 0))}</span>
+          </button>
 
-            <button className="flex flex-col items-center">
-              <div className="w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors">
-                <ThumbsDown size={24} className="text-white" />
-              </div>
-              <span className="text-white text-xs mt-1">Dislike</span>
-            </button>
+          <button className="flex flex-col items-center group">
+            <div className="w-12 h-12 rounded-full bg-white/10 group-hover:bg-white/20 flex items-center justify-center transition-colors">
+              <ThumbsDown size={24} className="text-white" />
+            </div>
+            <span className="text-white text-xs mt-1 font-medium">Dislike</span>
+          </button>
 
-            <button className="flex flex-col items-center">
-              <div className="w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors">
-                <MessageCircle size={24} className="text-white" />
-              </div>
-              <span className="text-white text-xs mt-1">{formatCount(currentShort.comment_count)}</span>
-            </button>
+          <button className="flex flex-col items-center group">
+            <div className="w-12 h-12 rounded-full bg-white/10 group-hover:bg-white/20 flex items-center justify-center transition-colors">
+              <MessageCircle size={24} className="text-white" fill="currentColor" />
+            </div>
+            <span className="text-white text-xs mt-1 font-medium">{formatCount(currentShort.comment_count)}</span>
+          </button>
 
-            <button className="flex flex-col items-center">
-              <div className="w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors">
-                <Share2 size={24} className="text-white" />
-              </div>
-              <span className="text-white text-xs mt-1">Share</span>
-            </button>
+          <button className="flex flex-col items-center group">
+            <div className="w-12 h-12 rounded-full bg-white/10 group-hover:bg-white/20 flex items-center justify-center transition-colors">
+              <Share2 size={24} className="text-white" fill="currentColor" />
+            </div>
+            <span className="text-white text-xs mt-1 font-medium">Share</span>
+          </button>
 
-            <button className="flex flex-col items-center">
-              <div className="w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors">
-                <MoreVertical size={24} className="text-white" />
-              </div>
-            </button>
+          <div className="w-10 h-10 rounded-lg border-2 border-white/20 overflow-hidden bg-white/10">
+             <img src={currentShort.thumbnail_url} className="w-full h-full object-cover grayscale opacity-50" alt="audio" />
           </div>
         </div>
 
-        <div className="absolute -right-14 top-1/2 -translate-y-1/2 hidden sm:flex flex-col gap-3">
-          <button 
-            onClick={goToPrev}
-            disabled={currentIndex === 0}
-            className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center transition-colors"
-          >
-            <ChevronUp size={24} className="text-white" />
-          </button>
-          <button 
-            onClick={goToNext}
-            disabled={currentIndex === shorts.length - 1}
-            className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center transition-colors"
-          >
-            <ChevronDown size={24} className="text-white" />
-          </button>
+        {/* Video Info Area */}
+        <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none">
+          <div className="flex items-center gap-3 mb-4 pointer-events-auto">
+            <Link href={`/channel/${currentShort.channel?.handle}`}>
+              <img 
+                src={currentShort.channel?.avatar_url || 'https://picsum.photos/seed/default/40/40'}
+                alt={currentShort.channel?.name}
+                className="w-10 h-10 rounded-full border border-white/20"
+              />
+            </Link>
+            <div className="flex-1 min-w-0">
+              <Link href={`/channel/${currentShort.channel?.handle}`} className="flex items-center gap-1">
+                <span className="text-white font-bold text-sm truncate">
+                  @{currentShort.channel?.handle.replace('@', '')}
+                </span>
+                {currentShort.channel?.is_verified && (
+                  <CheckCircle2 size={14} className="text-white" fill="currentColor" />
+                )}
+              </Link>
+            </div>
+            <button 
+              onClick={() => toggleSubscribe(currentShort.channel?.id)}
+              className={`px-4 py-1.5 rounded-full text-sm font-bold transition-colors ${
+                subscribed[currentShort.channel?.id] 
+                  ? 'bg-white/20 text-white' 
+                  : 'bg-white text-black hover:bg-white/90'
+              }`}
+            >
+              {subscribed[currentShort.channel?.id] ? 'Subscribed' : 'Subscribe'}
+            </button>
+          </div>
+          <p className="text-white text-[15px] line-clamp-2 leading-snug mb-2 pointer-events-auto">{currentShort.title}</p>
+        </div>
+
+        {/* Progress Bar */}
+        <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/20">
+          <div className="h-full bg-red-600 transition-all duration-300" style={{ width: '0%' }} id="shorts-progress" />
         </div>
       </div>
 
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5">
-        {shorts.slice(Math.max(0, currentIndex - 2), Math.min(shorts.length, currentIndex + 3)).map((_, idx) => {
-          const actualIdx = Math.max(0, currentIndex - 2) + idx;
-          return (
-            <button
-              key={actualIdx}
-              onClick={() => setCurrentIndex(actualIdx)}
-              className={`w-1.5 h-1.5 rounded-full transition-all ${
-                actualIdx === currentIndex ? 'bg-white w-4' : 'bg-white/40 hover:bg-white/60'
-              }`}
-            />
-          );
-        })}
+      {/* Vertical Navigation Buttons */}
+      <div className="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col gap-4 z-50">
+        <button 
+          onClick={goToPrev}
+          disabled={currentIndex === 0}
+          className="w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center transition-colors text-white"
+        >
+          <ChevronUp size={32} />
+        </button>
+        <button 
+          onClick={goToNext}
+          disabled={currentIndex === shorts.length - 1}
+          className="w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center transition-colors text-white"
+        >
+          <ChevronDown size={32} />
+        </button>
       </div>
     </div>
   );
