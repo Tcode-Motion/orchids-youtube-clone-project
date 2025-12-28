@@ -30,8 +30,9 @@ const sections: SettingsSection[] = [
   { id: 'notifications', title: 'Notifications', icon: <Bell size={20} /> },
   { id: 'playback', title: 'Playback and performance', icon: <Play size={20} /> },
   { id: 'downloads', title: 'Downloads', icon: <Download size={20} /> },
-  { id: 'privacy', title: 'Privacy', icon: <Shield size={20} /> },
-  { id: 'appearance', title: 'Appearance', icon: <Palette size={20} /> },
+    { id: 'privacy', title: 'Privacy', icon: <Shield size={20} /> },
+    { id: 'creator', title: 'Creator Studio', icon: <Video size={20} /> },
+    { id: 'appearance', title: 'Appearance', icon: <Palette size={20} /> },
   { id: 'language', title: 'Language and location', icon: <Globe size={20} /> },
 ];
 
@@ -322,7 +323,7 @@ export default function SettingsPage() {
             {activeSection === 'appearance' && (
               <div className="space-y-6">
                 <h2 className="text-lg font-semibold">Appearance</h2>
-                <p className="text-sm text-[#606060]">Adjust the appearance of YouTube across this browser</p>
+                <p className="text-sm text-[#606060]">Adjust the appearance of VidStream across this browser</p>
                 <div className="grid grid-cols-3 gap-4 mt-4">
                   <button
                     onClick={() => saveSettings({ theme: 'light' })}
