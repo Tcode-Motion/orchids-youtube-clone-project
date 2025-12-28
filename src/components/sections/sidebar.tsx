@@ -1,3 +1,5 @@
+"use client";
+
 import React from 'react';
 import { Home, PlaySquare, Library, UserCircle, History, Clock, ThumbsUp, Flame, Music2, Gamepad2, Trophy, Settings, Flag, HelpCircle, MessageSquarePlus } from 'lucide-react';
 import { cn } from '@/lib/utils';
