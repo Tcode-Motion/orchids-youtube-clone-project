@@ -137,8 +137,9 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="bg-[#f9f9f9] min-h-screen">
-      <div className="max-w-[1200px] mx-auto p-6">
+    <LayoutWrapper>
+      <div className="bg-[#f9f9f9] min-h-[calc(100vh-56px)]">
+        <div className="max-w-[1200px] mx-auto p-6">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-semibold text-[#0f0f0f]">Settings</h1>
           {saved && (
