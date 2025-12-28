@@ -162,15 +162,15 @@ function WatchContent() {
             .single();
           if (watchLaterData) setSavedToWatchLater(true);
 
-          if (videoData.channel) {
-            const { data: subData } = await supabase
-              .from('subscriptions')
-              .select('id')
-              .eq('subscriber_id', user.id)
-              .eq('channel_id', videoData.channel.id)
-              .single();
-            if (subData) setSubscribed(true);
-          }
+            if (videoData.channel) {
+              const { data: subData } = await supabase
+                .from('subscriptions')
+                .select('id')
+                .eq('user_id', user.id)
+                .eq('channel_id', videoData.channel.id)
+                .single();
+              if (subData) setSubscribed(true);
+            }
         }
         
         const { data: related } = await supabase
