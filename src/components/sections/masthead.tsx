@@ -20,52 +20,56 @@ const Masthead: React.FC<MastheadProps> = ({ onMenuClick }) => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showCreateChannelModal, setShowCreateChannelModal] = useState(false);
-  const [hasChannel, setHasChannel] = useState(false);
-  const [showMobileSearch, setShowMobileSearch] = useState(false);
-  const [theme, setTheme] = useState('light');
+    const [hasChannel, setHasChannel] = useState(false);
+    const [channelHandle, setChannelHandle] = useState<string | null>(null);
+    const [showMobileSearch, setShowMobileSearch] = useState(false);
+    const [theme, setTheme] = useState('light');
 
-  const userMenuRef = useRef<HTMLDivElement>(null);
-  const createMenuRef = useRef<HTMLDivElement>(null);
-  const notificationsRef = useRef<HTMLDivElement>(null);
+    const userMenuRef = useRef<HTMLDivElement>(null);
+    const createMenuRef = useRef<HTMLDivElement>(null);
+    const notificationsRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    supabase.auth.getUser().then(async ({ data }) => {
-      setUser(data.user);
-      if (data.user) {
-        const { data: channel } = await supabase
-          .from('channels')
-          .select('id')
-          .eq('user_id', data.user.id)
-          .single();
-        setHasChannel(!!channel);
+    useEffect(() => {
+      supabase.auth.getUser().then(async ({ data }) => {
+        setUser(data.user);
+        if (data.user) {
+          const { data: channel } = await supabase
+            .from('channels')
+            .select('id, handle')
+            .eq('user_id', data.user.id)
+            .single();
+          setHasChannel(!!channel);
+          setChannelHandle(channel?.handle || null);
 
-        const { data: settings } = await supabase
-          .from('user_settings')
-          .select('theme')
-          .eq('user_id', data.user.id)
-          .single();
-        if (settings?.theme) {
-          setTheme(settings.theme);
+          const { data: settings } = await supabase
+            .from('user_settings')
+            .select('theme')
+            .eq('user_id', data.user.id)
+            .single();
+          if (settings?.theme) {
+            setTheme(settings.theme);
+          }
         }
-      }
-    });
+      });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        const { data: channel } = await supabase
-          .from('channels')
-          .select('id')
-          .eq('user_id', session.user.id)
-          .single();
-        setHasChannel(!!channel);
-      } else {
-        setHasChannel(false);
-      }
-    });
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+        setUser(session?.user ?? null);
+        if (session?.user) {
+          const { data: channel } = await supabase
+            .from('channels')
+            .select('id, handle')
+            .eq('user_id', session.user.id)
+            .single();
+          setHasChannel(!!channel);
+          setChannelHandle(channel?.handle || null);
+        } else {
+          setHasChannel(false);
+          setChannelHandle(null);
+        }
+      });
 
-    return () => subscription.unsubscribe();
-  }, []);
+      return () => subscription.unsubscribe();
+    }, []);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
