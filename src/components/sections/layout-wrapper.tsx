@@ -45,11 +45,12 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
 
     return (
       <div className="flex flex-col min-h-screen bg-background">
-        {/* Masthead is always visible except on auth pages */}
-        <Masthead onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
+        {/* Masthead is always visible except on auth and studio pages (studio has its own) */}
+        {!isStudioPage && <Masthead onMenuClick={() => setSidebarOpen(!sidebarOpen)} />}
         
         <div className={cn(
           "flex flex-1 pt-18",
+          isStudioPage && "pt-0" // Studio handles its own padding/header
         )}>
           {/* Sidebar is hidden on shorts and studio page */}
           {!isShortsPage && !isStudioPage && (
