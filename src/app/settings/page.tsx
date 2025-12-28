@@ -521,13 +521,14 @@ export default function SettingsPage() {
                     <button className="w-12 h-6 rounded-full bg-[#065fd4]">
                       <div className="w-5 h-5 bg-white rounded-full shadow translate-x-6" />
                     </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </LayoutWrapper>
   );
 }
