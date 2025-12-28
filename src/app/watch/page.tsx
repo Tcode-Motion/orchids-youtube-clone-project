@@ -379,52 +379,141 @@ function WatchContent() {
           </div>
         </div>
 
-        <div className="w-full lg:w-[400px] shrink-0">
-          <div className="space-y-3">
-            {relatedVideos.map((related) => (
-              <Link 
-                key={related.id} 
-                href={`/watch?v=${related.id}`}
-                className="flex gap-2 group"
-              >
-                <div className="relative w-40 h-[90px] rounded-lg overflow-hidden bg-gray-200 shrink-0">
-                  <img 
-                    src={related.thumbnail_url || 'https://picsum.photos/seed/default/168/94'}
-                    alt={related.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                  />
-                  {related.is_live ? (
-                    <span className="absolute bottom-1 left-1 bg-[#cc0000] text-white text-[10px] font-medium px-1 rounded-sm uppercase">
-                      Live
-                    </span>
-                  ) : (
-                    <span className="absolute bottom-1 right-1 bg-black/80 text-white text-[10px] font-medium px-1 rounded">
-                      {formatDuration(related.duration)}
-                    </span>
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-sm font-medium text-[#0f0f0f] line-clamp-2 leading-5">
-                    {related.title}
-                  </h3>
-                  <div className="flex items-center gap-1 mt-1">
-                    <span className="text-xs text-[#606060]">{related.channel?.name}</span>
-                    {related.channel?.is_verified && (
-                      <CheckCircle2 size={10} className="text-[#606060]" />
+          <div className="w-full lg:w-[400px] shrink-0">
+            <div className="space-y-3">
+              {relatedVideos.map((related) => (
+                <Link 
+                  key={related.id} 
+                  href={`/watch?v=${related.id}`}
+                  className="flex gap-2 group"
+                >
+                  <div className="relative w-40 h-[90px] rounded-lg overflow-hidden bg-gray-200 shrink-0">
+                    <img 
+                      src={related.thumbnail_url || 'https://picsum.photos/seed/default/168/94'}
+                      alt={related.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                    />
+                    {related.is_live ? (
+                      <span className="absolute bottom-1 left-1 bg-[#cc0000] text-white text-[10px] font-medium px-1 rounded-sm uppercase">
+                        Live
+                      </span>
+                    ) : (
+                      <span className="absolute bottom-1 right-1 bg-black/80 text-white text-[10px] font-medium px-1 rounded">
+                        {formatDuration(related.duration)}
+                      </span>
                     )}
                   </div>
-                  <div className="text-xs text-[#606060]">
-                    {formatViews(related.view_count)} views &middot; {timeAgo(related.published_at)}
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-sm font-medium text-[#0f0f0f] line-clamp-2 leading-5">
+                      {related.title}
+                    </h3>
+                    <div className="flex items-center gap-1 mt-1">
+                      <span className="text-xs text-[#606060]">{related.channel?.name}</span>
+                      {related.channel?.is_verified && (
+                        <CheckCircle2 size={10} className="text-[#606060]" />
+                      )}
+                    </div>
+                    <div className="text-xs text-[#606060]">
+                      {formatViews(related.view_count)} views &middot; {timeAgo(related.published_at)}
+                    </div>
                   </div>
-                </div>
-              </Link>
-              ))}
+                </Link>
+                ))}
+              </div>
             </div>
           </div>
+
+        {showShareModal && (
+          <div className="fixed inset-0 bg-black/60 z-[9999] flex items-center justify-center p-4" onClick={() => setShowShareModal(false)}>
+            <div className="bg-white rounded-xl w-full max-w-md shadow-2xl" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center justify-between p-4 border-b border-[#e5e5e5]">
+                <h3 className="text-lg font-semibold">Share</h3>
+                <button onClick={() => setShowShareModal(false)} className="p-2 hover:bg-[#f2f2f2] rounded-full">
+                  <X size={20} />
+                </button>
+              </div>
+              
+              <div className="p-4">
+                <div className="flex gap-4 justify-center mb-6">
+                  <button 
+                    onClick={() => {
+                      const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(video.title)}&url=${encodeURIComponent(window.location.href)}`;
+                      window.parent.postMessage({ type: "OPEN_EXTERNAL_URL", data: { url } }, "*");
+                    }}
+                    className="flex flex-col items-center gap-2"
+                  >
+                    <div className="w-12 h-12 bg-[#1DA1F2] rounded-full flex items-center justify-center">
+                      <Twitter size={24} className="text-white" fill="currentColor" />
+                    </div>
+                    <span className="text-xs">Twitter</span>
+                  </button>
+                  <button 
+                    onClick={() => {
+                      const url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`;
+                      window.parent.postMessage({ type: "OPEN_EXTERNAL_URL", data: { url } }, "*");
+                    }}
+                    className="flex flex-col items-center gap-2"
+                  >
+                    <div className="w-12 h-12 bg-[#1877F2] rounded-full flex items-center justify-center">
+                      <Facebook size={24} className="text-white" fill="currentColor" />
+                    </div>
+                    <span className="text-xs">Facebook</span>
+                  </button>
+                  <button 
+                    onClick={() => {
+                      const url = `https://wa.me/?text=${encodeURIComponent(video.title + ' ' + window.location.href)}`;
+                      window.parent.postMessage({ type: "OPEN_EXTERNAL_URL", data: { url } }, "*");
+                    }}
+                    className="flex flex-col items-center gap-2"
+                  >
+                    <div className="w-12 h-12 bg-[#25D366] rounded-full flex items-center justify-center">
+                      <MessageCircle size={24} className="text-white" fill="currentColor" />
+                    </div>
+                    <span className="text-xs">WhatsApp</span>
+                  </button>
+                  <button 
+                    onClick={() => {
+                      const url = `mailto:?subject=${encodeURIComponent(video.title)}&body=${encodeURIComponent('Check out this video: ' + window.location.href)}`;
+                      window.parent.postMessage({ type: "OPEN_EXTERNAL_URL", data: { url } }, "*");
+                    }}
+                    className="flex flex-col items-center gap-2"
+                  >
+                    <div className="w-12 h-12 bg-[#EA4335] rounded-full flex items-center justify-center">
+                      <Mail size={24} className="text-white" />
+                    </div>
+                    <span className="text-xs">Email</span>
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-2 bg-[#f2f2f2] rounded-lg p-2">
+                  <input 
+                    type="text" 
+                    value={typeof window !== 'undefined' ? window.location.href : ''}
+                    readOnly
+                    className="flex-1 bg-transparent text-sm outline-none px-2 truncate"
+                  />
+                  <button 
+                    onClick={() => {
+                      navigator.clipboard.writeText(window.location.href);
+                      setCopied(true);
+                      setTimeout(() => setCopied(false), 2000);
+                    }}
+                    className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${copied ? 'bg-green-500 text-white' : 'bg-[#065fd4] text-white hover:bg-[#0556be]'}`}
+                  >
+                    {copied ? (
+                      <span className="flex items-center gap-1"><Check size={16} /> Copied!</span>
+                    ) : (
+                      <span className="flex items-center gap-1"><Copy size={16} /> Copy</span>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
         </div>
-      </div>
-    );
-  }
+      );
+    }
 
 export default function WatchPage() {
   return (
