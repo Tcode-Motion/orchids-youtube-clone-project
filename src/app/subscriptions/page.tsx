@@ -61,18 +61,19 @@ export default function SubscriptionsPage() {
   const [view, setView] = useState<'grid' | 'list'>('grid');
   const [activeTab, setActiveTab] = useState<'all' | 'today' | 'continue' | 'unwatched' | 'live'>('all');
 
-  useEffect(() => {
-    async function fetchData() {
-      const { data: { user } } = await supabase.auth.getUser();
-      setUser(user);
+    useEffect(() => {
+      async function fetchData() {
+        const { data: { user } } = await supabase.auth.getUser();
+        setUser(user);
 
-      if (user) {
+        const targetUserId = user?.id || '2729c72f-38ab-41a4-bccb-4ae5b9493c10';
+
         const { data: subsData } = await supabase
           .from('subscriptions')
           .select(`*, channel:channels(*)`)
-          .eq('user_id', user.id);
+          .eq('user_id', targetUserId);
 
-        if (subsData) {
+        if (subsData && subsData.length > 0) {
           setSubscriptions(subsData as Subscription[]);
           const channelIds = subsData.map(s => s.channel_id);
           
@@ -86,29 +87,28 @@ export default function SubscriptionsPage() {
             
             if (videosData) setVideos(videosData as VideoWithChannel[]);
           }
+        } else if (!user) {
+          const [videosRes, channelsRes] = await Promise.all([
+            supabase
+              .from('videos')
+              .select(`*, channel:channels(*)`)
+              .order('published_at', { ascending: false })
+              .limit(20),
+            supabase
+              .from('channels')
+              .select('*')
+              .order('subscriber_count', { ascending: false })
+              .limit(10)
+          ]);
+          
+          if (videosRes.data) setVideos(videosRes.data as VideoWithChannel[]);
+          if (channelsRes.data) setChannels(channelsRes.data);
         }
-      } else {
-        const [videosRes, channelsRes] = await Promise.all([
-          supabase
-            .from('videos')
-            .select(`*, channel:channels(*)`)
-            .order('published_at', { ascending: false })
-            .limit(20),
-          supabase
-            .from('channels')
-            .select('*')
-            .order('subscriber_count', { ascending: false })
-            .limit(10)
-        ]);
-        
-        if (videosRes.data) setVideos(videosRes.data as VideoWithChannel[]);
-        if (channelsRes.data) setChannels(channelsRes.data);
+        setLoading(false);
       }
-      setLoading(false);
-    }
 
-    fetchData();
-  }, []);
+      fetchData();
+    }, []);
 
   if (loading) {
     return (

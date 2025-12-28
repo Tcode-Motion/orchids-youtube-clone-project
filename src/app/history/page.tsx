@@ -55,38 +55,31 @@ export default function HistoryPage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
 
-  useEffect(() => {
-    async function fetchData() {
-      const { data: { user } } = await supabase.auth.getUser();
-      setUser(user);
+    useEffect(() => {
+      async function fetchData() {
+        const { data: { user } } = await supabase.auth.getUser();
+        setUser(user);
 
-      if (user) {
+        const targetUserId = user?.id || '2729c72f-38ab-41a4-bccb-4ae5b9493c10';
+
         const { data: historyData } = await supabase
           .from('watch_history')
           .select(`
             *,
             video:videos(*, channel:channels(*))
           `)
-          .eq('user_id', user.id)
+          .eq('user_id', targetUserId)
           .order('watched_at', { ascending: false });
 
         if (historyData) {
           setHistory(historyData as WatchHistoryItem[]);
         }
-      } else {
-        const { data: videosData } = await supabase
-          .from('videos')
-          .select(`*, channel:channels(*)`)
-          .order('view_count', { ascending: false })
-          .limit(20);
         
-        if (videosData) setVideos(videosData as VideoWithChannel[]);
+        setLoading(false);
       }
-      setLoading(false);
-    }
 
-    fetchData();
-  }, []);
+      fetchData();
+    }, []);
 
   const displayVideos = user ? history.map(h => h.video) : videos;
   const filteredVideos = displayVideos.filter(v => 
