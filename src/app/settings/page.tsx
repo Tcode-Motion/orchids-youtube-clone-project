@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import Link from 'next/link';
+import LayoutWrapper from '@/components/sections/layout-wrapper';
 import { 
   User, 
   Bell, 
