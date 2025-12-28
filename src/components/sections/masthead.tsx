@@ -1,77 +1,79 @@
 import React from 'react';
-import { Menu, Search, Mic, MoreVertical, UserCircle } from 'lucide-react';
+import Image from 'next/image';
+import { Menu, Search, Mic, MoreVertical, CircleUserRound } from 'lucide-react';
 
-const Masthead = () => {
+/**
+ * YouTube Masthead Component
+ * Replicates the top navigation bar with search, voice search, and global actions.
+ */
+const Masthead: React.FC = () => {
   return (
-    <header className="fixed top-0 left-0 right-0 h-14 bg-white flex items-center justify-between px-4 z-50">
-      {/* Start: Logo and Sidebar Toggle */}
+    <header className="masthead fixed top-0 left-0 right-0 h-[56px] bg-white flex items-center justify-between px-4 z-[1000]">
+      {/* Start: Menu and Logo */}
       <div className="flex items-center">
         <button 
-          className="p-2 mr-2 hover:bg-[#f2f2f2] rounded-full transition-colors duration-200 focus:outline-none"
+          className="p-2 mr-1 hover:bg-[#f2f2f2] rounded-full transition-colors flex items-center justify-center"
           aria-label="Guide"
         >
-          <Menu className="w-6 h-6 text-[#0f0f0f]" strokeWidth={1.5} />
+          <Menu className="w-6 h-6 text-[#0f0f0f]" />
         </button>
         
-        <a href="/" className="flex items-center py-4 pr-1 relative" aria-label="YouTube Home">
-          <div className="flex items-center">
-            {/* YouTube Logo Construction */}
-            <div className="relative flex items-center">
-              <div className="bg-[#FF0000] w-[28px] h-[20px] rounded-[4px] flex items-center justify-center mr-1">
-                <div 
-                  className="w-0 h-0 border-t-[4px] border-t-transparent border-l-[7px] border-l-white border-b-[4px] border-b-transparent ml-[1px]"
-                />
-              </div>
-              <span className="font-display font-bold text-[18px] tracking-tight text-[#0F0F0F] flex items-center">
-                YouTube<span className="text-[10px] font-normal text-[#606060] absolute -top-1 -right-4">US</span>
-              </span>
-            </div>
+        <a href="/" className="flex items-center py-[18px] pr-[14px] pl-4 cursor-pointer">
+          <div className="relative w-[90px] h-5">
+            <Image
+              src="https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/test-clones/5bf2a976-9a8b-4285-99e3-d8c2d732fe3c-youtube-com/assets/images/images_1.png"
+              alt="YouTube Logo"
+              fill
+              className="object-contain"
+              priority
+            />
           </div>
         </a>
       </div>
 
       {/* Center: Search Bar */}
-      <div className="flex flex-1 items-center justify-center max-w-[720px] ml-10">
+      <div className="flex items-center flex-1 max-w-[720px] ml-10">
         <div className="flex flex-1 items-center">
-          <div className="flex flex-1 items-center bg-white border border-[#e5e5e5] rounded-l-full px-4 py-1 h-10 shadow-inner focus-within:border-[#065fd4] focus-within:shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)] ml-8">
-            <div className="hidden items-center pr-3 group-focus-within:flex">
-              <Search className="w-4 h-4 text-[#0f0f0f]" />
+          <div className="flex flex-1 items-center h-10 px-4 ml-8 bg-white border border-[#ccc] rounded-l-[40px] shadow-inner focus-within:border-[#065fd4] focus-within:ml-0 group transition-all">
+            <div className="hidden group-focus-within:flex mr-4">
+              <Search className="w-5 h-5 text-[#606060]" />
             </div>
             <input
               type="text"
               placeholder="Search"
-              className="w-full bg-transparent border-none outline-none text-[16px] font-normal placeholder:text-[#606060]"
+              className="w-full bg-transparent outline-none text-[16px] font-normal leading-6 text-[#0f0f0f] placeholder:text-[#888]"
             />
           </div>
           <button 
-            className="bg-[#f8f8f8] border border-[#e5e5e5] border-l-0 rounded-r-full px-5 py-2 h-10 flex items-center justify-center hover:bg-[#f0f0f0] hover:shadow-[0_1px_2px_rgba(0,0,0,0.1)] transition-colors"
+            className="search-btn h-10 w-16 flex items-center justify-center bg-[#f8f8f8] border border-[#ccc] border-l-0 rounded-r-[40px] hover:bg-[#f0f0f0] hover:shadow-sm"
             aria-label="Search"
           >
-            <Search className="w-5 h-5 text-[#0f0f0f]" strokeWidth={1.5} />
+            <Search className="w-5 h-5 text-[#0f0f0f]" />
           </button>
         </div>
+        
         <button 
-          className="ml-4 p-2 bg-[#f2f2f2] hover:bg-[#e5e5e5] rounded-full transition-colors duration-200"
+          className="voice-search-btn h-10 w-10 ml-2 flex items-center justify-center bg-[#f2f2f2] rounded-full hover:bg-[#e5e5e5] transition-colors"
           aria-label="Search with your voice"
         >
           <Mic className="w-6 h-6 text-[#0f0f0f]" />
         </button>
       </div>
 
-      {/* End: Action Buttons and Settings */}
-      <div className="flex items-center justify-end min-w-[225px]">
+      {/* End: Settings and Sign In */}
+      <div className="flex items-center gap-2">
         <button 
-          className="p-2 mr-2 hover:bg-[#f2f2f2] rounded-full transition-colors duration-200 focus:outline-none"
+          className="p-2 hover:bg-[#f2f2f2] rounded-full transition-colors flex items-center justify-center"
           aria-label="Settings"
         >
           <MoreVertical className="w-6 h-6 text-[#0f0f0f]" />
         </button>
         
         <a 
-          href="https://accounts.google.com/ServiceLogin"
-          className="flex items-center px-3 py-1.5 border border-[#e5e5e5] rounded-full text-[#065fd4] font-medium text-[14px] hover:bg-[#def1ff] hover:border-transparent transition-all duration-200"
+          href="https://accounts.google.com/ServiceLogin?service=youtube"
+          className="signin-btn flex items-center gap-2 px-[15px] h-9 border border-[#e5e5e5] rounded-[18px] text-[#065fd4] font-medium text-sm hover:bg-[#def1ff] hover:border-transparent transition-colors"
         >
-          <UserCircle className="w-6 h-6 mr-2" strokeWidth={1.5} />
+          <CircleUserRound className="w-6 h-6" />
           <span>Sign in</span>
         </a>
       </div>
