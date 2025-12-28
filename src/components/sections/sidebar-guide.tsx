@@ -4,7 +4,7 @@ import { Home, PlaySquare, Library, UserCircle2 } from 'lucide-react';
 /**
  * SidebarGuide Component
  * 
- * Clones the YouTube left-side navigation drawer (guide) with primary links.
+ * Clones the VidStream left-side navigation drawer (guide) with primary links.
  * Based on the design system:
  * - Width: 240px (full)
  * - Item Height: 40px

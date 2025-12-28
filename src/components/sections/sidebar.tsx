@@ -295,7 +295,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
         <a href="#" className="hover:underline">Terms</a>
         <a href="#" className="hover:underline">Privacy</a>
         <a href="#" className="hover:underline">Policy & Safety</a>
-        <a href="#" className="hover:underline">How YouTube works</a>
+        <a href="#" className="hover:underline">How VidStream works</a>
         <a href="#" className="hover:underline">Test new features</a>
       </div>
 

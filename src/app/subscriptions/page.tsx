@@ -146,7 +146,7 @@ export default function SubscriptionsPage() {
                   <Bell size={48} className="text-[#606060]" />
                 </div>
                 <h2 className="text-xl font-semibold mb-2">Don't miss new videos</h2>
-                <p className="text-[#606060] mb-4">Sign in to see updates from your favorite YouTube channels</p>
+                <p className="text-[#606060] mb-4">Sign in to see updates from your favorite VidStream channels</p>
                 <Link href="/auth" className="inline-block px-4 py-2 bg-[#065fd4] text-white rounded-full font-medium text-sm hover:bg-[#0556be]">
                   Sign in
                 </Link>

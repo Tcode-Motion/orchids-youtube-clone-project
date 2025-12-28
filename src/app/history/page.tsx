@@ -212,7 +212,7 @@ export default function HistoryPage() {
               <div className="mt-6 pt-6 border-t border-[#e5e5e5]">
                 <h3 className="font-medium mb-4">Manage all history</h3>
                 <p className="text-xs text-[#606060]">
-                  Your YouTube watch history controls what videos are recommended to you.
+                  Your VidStream watch history controls what videos are recommended to you.
                 </p>
               </div>
             </div>

@@ -70,10 +70,10 @@ export default function AuthPage() {
         </div>
 
         <h1 className="text-2xl font-normal text-center text-[#202124] mb-2">
-          {isSignUp ? 'Create your YouTube Account' : 'Sign in'}
+          {isSignUp ? 'Create your VidStream Account' : 'Sign in'}
         </h1>
         <p className="text-center text-[#5f6368] mb-8">
-          {isSignUp ? 'to continue to YouTube' : 'to continue to YouTube'}
+          {isSignUp ? 'to continue to VidStream' : 'to continue to VidStream'}
         </p>
 
         {error && (
