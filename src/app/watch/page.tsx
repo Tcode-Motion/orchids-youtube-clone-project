@@ -222,16 +222,16 @@ function WatchContent() {
     setSubscribed(newSubscribed);
 
     if (newSubscribed) {
-      await supabase.from('subscriptions').insert({
-        subscriber_id: user.id,
-        channel_id: video.channel.id,
-        created_at: new Date().toISOString()
-      });
-    } else {
-      await supabase.from('subscriptions').delete()
-        .eq('subscriber_id', user.id)
-        .eq('channel_id', video.channel.id);
-    }
+        await supabase.from('subscriptions').insert({
+          user_id: user.id,
+          channel_id: video.channel.id,
+          created_at: new Date().toISOString()
+        });
+      } else {
+        await supabase.from('subscriptions').delete()
+          .eq('user_id', user.id)
+          .eq('channel_id', video.channel.id);
+      }
   };
 
   const handleSaveToWatchLater = async () => {
