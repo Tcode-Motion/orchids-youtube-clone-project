@@ -15,7 +15,14 @@ import {
   Bell,
   ChevronDown,
   ChevronUp,
-  SortDesc
+  SortDesc,
+  Copy,
+  X,
+  Facebook,
+  Twitter,
+  Mail,
+  MessageCircle,
+  Link2
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -78,6 +85,8 @@ function WatchContent() {
   const [liked, setLiked] = useState<boolean | null>(null);
   const [subscribed, setSubscribed] = useState(false);
   const [commentText, setCommentText] = useState('');
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (!videoId) return;
@@ -157,28 +166,36 @@ function WatchContent() {
       <Masthead />
       <div className="pt-[56px] flex flex-col lg:flex-row gap-6 p-4 lg:p-6 max-w-[1800px] mx-auto w-full">
         <div className="flex-1 max-w-[1280px]">
-          <div className="relative aspect-video bg-black rounded-xl overflow-hidden">
-            {video.is_live ? (
-              <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-red-900 to-black">
-                <div className="text-center">
-                  <div className="flex items-center justify-center gap-2 mb-4">
-                    <span className="w-3 h-3 bg-red-500 rounded-full animate-pulse" />
-                    <span className="text-white text-2xl font-bold">LIVE</span>
+            <div className="relative aspect-video bg-black rounded-xl overflow-hidden">
+              {video.is_live ? (
+                <div className="relative w-full h-full">
+                  <video
+                    src={video.video_url || 'https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'}
+                    poster={video.thumbnail_url}
+                    controls
+                    autoPlay
+                    className="w-full h-full object-contain"
+                  />
+                  <div className="absolute top-4 left-4 flex items-center gap-2">
+                    <span className="bg-red-600 text-white text-xs font-bold px-2 py-1 rounded flex items-center gap-1.5">
+                      <span className="w-2 h-2 bg-white rounded-full animate-pulse" />
+                      LIVE
+                    </span>
+                    <span className="bg-black/60 text-white text-xs px-2 py-1 rounded">
+                      {formatViews(video.view_count)} watching
+                    </span>
                   </div>
-                  <p className="text-white/70">Stream is currently live</p>
                 </div>
-              </div>
-            ) : (
-              <img 
-                src={video.thumbnail_url || 'https://picsum.photos/seed/default/1280/720'} 
-                alt={video.title}
-                className="w-full h-full object-cover"
-              />
-            )}
-            <div className="absolute bottom-0 left-0 right-0 h-1 bg-gray-600">
-              <div className="h-full bg-red-600 w-[35%]" />
+              ) : (
+                <video
+                  src={video.video_url || 'https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'}
+                  poster={video.thumbnail_url}
+                  controls
+                  autoPlay
+                  className="w-full h-full object-contain"
+                />
+              )}
             </div>
-          </div>
 
           <h1 className="mt-3 text-xl font-semibold text-[#0f0f0f] leading-7">
             {video.title}
@@ -235,14 +252,27 @@ function WatchContent() {
                   <ThumbsDown size={20} fill={liked === false ? 'currentColor' : 'none'} />
                 </button>
               </div>
-              <button className="flex items-center gap-2 px-4 py-2 bg-[#f2f2f2] rounded-full hover:bg-[#e5e5e5] transition-colors">
-                <Share2 size={20} />
-                <span className="font-medium text-sm">Share</span>
-              </button>
-              <button className="flex items-center gap-2 px-4 py-2 bg-[#f2f2f2] rounded-full hover:bg-[#e5e5e5] transition-colors">
-                <Download size={20} />
-                <span className="font-medium text-sm">Download</span>
-              </button>
+              <button 
+                  onClick={() => setShowShareModal(true)}
+                  className="flex items-center gap-2 px-4 py-2 bg-[#f2f2f2] rounded-full hover:bg-[#e5e5e5] transition-colors"
+                >
+                  <Share2 size={20} />
+                  <span className="font-medium text-sm">Share</span>
+                </button>
+                <button 
+                  onClick={() => {
+                    if (video.video_url) {
+                      const link = document.createElement('a');
+                      link.href = video.video_url;
+                      link.download = video.title + '.mp4';
+                      link.click();
+                    }
+                  }}
+                  className="flex items-center gap-2 px-4 py-2 bg-[#f2f2f2] rounded-full hover:bg-[#e5e5e5] transition-colors"
+                >
+                  <Download size={20} />
+                  <span className="font-medium text-sm">Download</span>
+                </button>
               <button className="p-2 bg-[#f2f2f2] rounded-full hover:bg-[#e5e5e5] transition-colors">
                 <MoreHorizontal size={20} />
               </button>
@@ -385,13 +415,13 @@ function WatchContent() {
                   </div>
                 </div>
               </Link>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  );
-}
+    );
+  }
 
 export default function WatchPage() {
   return (

@@ -22,7 +22,10 @@ import {
   MessageSquarePlus,
   ChevronRight,
   ChevronDown,
-  User
+  User,
+  Radio,
+  Upload,
+  PlayCircle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabase/client';
@@ -144,29 +147,36 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
 
   const renderFullSidebar = () => (
     <div className="pt-3 pb-4 h-full bg-white overflow-y-auto scrollbar-thin hover:scrollbar-thumb-gray-300">
-      <div className="flex flex-col">
-        <SidebarItem 
-          icon={<Home size={24} strokeWidth={pathname === '/' ? 2.5 : 2} />} 
-          label="Home"
-          href="/"
-          active={pathname === '/'}
-          onClick={onClose}
-        />
-        <SidebarItem 
-          icon={<PlaySquare size={24} strokeWidth={2} />} 
-          label="Shorts"
-          href="/shorts"
-          active={pathname === '/shorts'}
-          onClick={onClose}
-        />
-        <SidebarItem 
-          icon={<Library size={24} strokeWidth={2} />} 
-          label="Subscriptions"
-          href="/subscriptions"
-          active={pathname === '/subscriptions'}
-          onClick={onClose}
-        />
-      </div>
+        <div className="flex flex-col">
+          <SidebarItem 
+            icon={<Home size={24} strokeWidth={pathname === '/' ? 2.5 : 2} />} 
+            label="Home"
+            href="/"
+            active={pathname === '/'}
+            onClick={onClose}
+          />
+          <SidebarItem 
+            icon={<PlaySquare size={24} strokeWidth={2} />} 
+            label="Shorts"
+            href="/shorts"
+            active={pathname === '/shorts'}
+            onClick={onClose}
+          />
+          <SidebarItem 
+            icon={<Radio size={24} strokeWidth={2} />} 
+            label="Live"
+            href="/live"
+            active={pathname === '/live'}
+            onClick={onClose}
+          />
+          <SidebarItem 
+            icon={<Library size={24} strokeWidth={2} />} 
+            label="Subscriptions"
+            href="/subscriptions"
+            active={pathname === '/subscriptions'}
+            onClick={onClose}
+          />
+        </div>
 
       <SectionDivider />
 
@@ -260,17 +270,25 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
 
       <SectionDivider />
 
-      <SidebarHeader title="Explore" />
-      <div className="flex flex-col">
-        <SidebarItem icon={<Flame size={24} />} label="Trending" href="/trending" active={pathname === '/trending'} onClick={onClose} />
-        <SidebarItem icon={<Music2 size={24} />} label="Music" href="/channel/music" onClick={onClose} />
-        <SidebarItem icon={<Gamepad2 size={24} />} label="Gaming" href="/gaming" active={pathname === '/gaming'} onClick={onClose} />
-        <SidebarItem icon={<Newspaper size={24} />} label="News" href="/channel/news" onClick={onClose} />
-        <SidebarItem icon={<Trophy size={24} />} label="Sports" href="/channel/sports" onClick={onClose} />
-        <SidebarItem icon={<Lightbulb size={24} />} label="Learning" href="/channel/learning" onClick={onClose} />
-      </div>
+        <SidebarHeader title="Explore" />
+        <div className="flex flex-col">
+          <SidebarItem icon={<Flame size={24} />} label="Trending" href="/trending" active={pathname === '/trending'} onClick={onClose} />
+          <SidebarItem icon={<Music2 size={24} />} label="Music" href="/channel/music" onClick={onClose} />
+          <SidebarItem icon={<Gamepad2 size={24} />} label="Gaming" href="/gaming" active={pathname === '/gaming'} onClick={onClose} />
+          <SidebarItem icon={<Newspaper size={24} />} label="News" href="/channel/news" onClick={onClose} />
+          <SidebarItem icon={<Trophy size={24} />} label="Sports" href="/channel/sports" onClick={onClose} />
+          <SidebarItem icon={<Lightbulb size={24} />} label="Learning" href="/channel/learning" onClick={onClose} />
+        </div>
 
-      <SectionDivider />
+        <SectionDivider />
+
+        <SidebarHeader title="Creator" />
+        <div className="flex flex-col">
+          <SidebarItem icon={<Upload size={24} />} label="Upload" href="/upload" active={pathname === '/upload'} onClick={onClose} />
+          <SidebarItem icon={<PlayCircle size={24} />} label="VidStream Studio" href="/studio" active={pathname === '/studio'} onClick={onClose} />
+        </div>
+
+        <SectionDivider />
 
       <div className="flex flex-col">
         <SidebarItem icon={<Settings size={24} />} label="Settings" href="/settings" active={pathname === '/settings'} onClick={onClose} />
