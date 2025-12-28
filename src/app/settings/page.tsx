@@ -16,26 +16,32 @@ import {
     Sun,
     Monitor,
     Check,
-    Video
-  } from 'lucide-react';
-import type { User as SupabaseUser } from '@supabase/supabase-js';
-
-interface SettingsSection {
-  id: string;
-  title: string;
-  icon: React.ReactNode;
-}
-
-const sections: SettingsSection[] = [
-  { id: 'account', title: 'Account', icon: <User size={20} /> },
-  { id: 'notifications', title: 'Notifications', icon: <Bell size={20} /> },
-  { id: 'playback', title: 'Playback and performance', icon: <Play size={20} /> },
-  { id: 'downloads', title: 'Downloads', icon: <Download size={20} /> },
+    Video,
+    CreditCard,
+    Settings,
+    HelpCircle,
+    LogOut
+    } from 'lucide-react';
+  import type { User as SupabaseUser } from '@supabase/supabase-js';
+  
+  interface SettingsSection {
+    id: string;
+    title: string;
+    icon: React.ReactNode;
+  }
+  
+  const sections: SettingsSection[] = [
+    { id: 'account', title: 'Account', icon: <User size={20} /> },
+    { id: 'notifications', title: 'Notifications', icon: <Bell size={20} /> },
+    { id: 'playback', title: 'Playback and performance', icon: <Play size={20} /> },
+    { id: 'downloads', title: 'Downloads', icon: <Download size={20} /> },
     { id: 'privacy', title: 'Privacy', icon: <Shield size={20} /> },
     { id: 'creator', title: 'Creator Studio', icon: <Video size={20} /> },
+    { id: 'billing', title: 'Billing and payments', icon: <CreditCard size={20} /> },
     { id: 'appearance', title: 'Appearance', icon: <Palette size={20} /> },
-  { id: 'language', title: 'Language and location', icon: <Globe size={20} /> },
-];
+    { id: 'language', title: 'Language and location', icon: <Globe size={20} /> },
+    { id: 'advanced', title: 'Advanced settings', icon: <Settings size={20} /> },
+  ];
 
 interface UserSettings {
   theme: string;
