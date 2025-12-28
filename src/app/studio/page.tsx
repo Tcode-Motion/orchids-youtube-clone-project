@@ -29,11 +29,15 @@ import {
   Bell,
   HelpCircle,
   Menu,
-  X
+  X,
+  Sparkles,
+  Zap,
+  Play
 } from 'lucide-react';
 import type { User } from '@supabase/supabase-js';
+import { motion, AnimatePresence } from 'framer-motion';
 
-interface Video {
+interface VideoData {
   id: string;
   title: string;
   thumbnail_url: string;
@@ -56,14 +60,14 @@ interface Channel {
 }
 
 const menuItems = [
-  { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-  { id: 'content', icon: Video, label: 'Content' },
-  { id: 'analytics', icon: BarChart3, label: 'Analytics' },
-  { id: 'comments', icon: MessageSquare, label: 'Comments' },
-  { id: 'subtitles', icon: Subtitles, label: 'Subtitles' },
-  { id: 'copyright', icon: Copyright, label: 'Copyright' },
-  { id: 'earn', icon: DollarSign, label: 'Earn' },
-  { id: 'settings', icon: Settings, label: 'Settings' },
+  { id: 'dashboard', icon: LayoutDashboard, label: 'Control Panel' },
+  { id: 'content', icon: Video, label: 'Media Library' },
+  { id: 'analytics', icon: BarChart3, label: 'Neural Analytics' },
+  { id: 'comments', icon: MessageSquare, label: 'Community' },
+  { id: 'subtitles', icon: Subtitles, label: 'Captions' },
+  { id: 'copyright', icon: Copyright, label: 'IP Rights' },
+  { id: 'earn', icon: DollarSign, label: 'Revenue' },
+  { id: 'settings', icon: Settings, label: 'Engine Config' },
 ];
 
 function formatCount(count: number): string {
@@ -72,19 +76,11 @@ function formatCount(count: number): string {
   return count.toString();
 }
 
-function formatDate(date: string): string {
-  return new Date(date).toLocaleDateString('en-US', { 
-    month: 'short', 
-    day: 'numeric', 
-    year: 'numeric' 
-  });
-}
-
 export default function StudioPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [channel, setChannel] = useState<Channel | null>(null);
-  const [videos, setVideos] = useState<Video[]>([]);
+  const [videos, setVideos] = useState<VideoData[]>([]);
   const [activeSection, setActiveSection] = useState('dashboard');
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -103,14 +99,12 @@ export default function StudioPage() {
 
         if (channelData) {
           setChannel(channelData);
-
           const { data: videosData } = await supabase
             .from('videos')
             .select('*')
             .eq('channel_id', channelData.id)
             .order('created_at', { ascending: false });
-
-          if (videosData) setVideos(videosData);
+          if (videosData) setVideos(videosData as VideoData[]);
         }
       }
       setLoading(false);
@@ -118,471 +112,260 @@ export default function StudioPage() {
     fetchData();
   }, []);
 
-  const totalViews = videos.reduce((acc, v) => acc + v.view_count, 0);
-  const totalLikes = videos.reduce((acc, v) => acc + v.like_count, 0);
-  const totalComments = videos.reduce((acc, v) => acc + v.comment_count, 0);
-
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#1f1f1f] flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white" />
+      <div className="min-h-screen bg-[#050505] flex items-center justify-center">
+        <div className="relative">
+          <div className="w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+          <Sparkles className="absolute inset-0 m-auto text-primary animate-pulse" />
+        </div>
       </div>
     );
   }
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-[#1f1f1f] flex items-center justify-center">
-        <div className="text-center p-8 max-w-md">
-          <div className="w-20 h-20 bg-[#3f3f3f] rounded-full flex items-center justify-center mx-auto mb-6">
-            <Video size={40} className="text-white/60" />
+      <div className="min-h-screen bg-[#050505] flex items-center justify-center p-6">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center p-12 bg-white/5 border border-white/5 rounded-[40px] max-w-md shadow-2xl relative overflow-hidden"
+        >
+          <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 blur-[60px]" />
+          <div className="w-24 h-24 bg-primary/10 rounded-[32px] flex items-center justify-center mx-auto mb-8 text-primary shadow-inner">
+            <Zap size={48} />
           </div>
-          <h1 className="text-2xl font-semibold text-white mb-2">Sign in to VidStream Studio</h1>
-          <p className="text-white/60 mb-6">Manage your videos, view analytics, and grow your channel</p>
+          <h1 className="text-3xl font-extrabold text-white mb-4">Command Center</h1>
+          <p className="text-white/40 mb-10 leading-relaxed">Please authorize your session to access the neural media management system.</p>
           <button 
             onClick={() => router.push('/auth')}
-            className="px-6 py-3 bg-[#3ea6ff] text-black font-medium rounded-full hover:bg-[#65b8ff] transition-colors"
+            className="w-full h-14 bg-primary hover:bg-primary/90 text-white font-bold rounded-2xl shadow-lg shadow-primary/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
           >
-            Sign in
+            Authorize Access
           </button>
-        </div>
+        </motion.div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#1f1f1f] text-white">
-      <header className="fixed top-0 left-0 right-0 h-14 bg-[#282828] border-b border-[#3f3f3f] flex items-center justify-between px-4 z-50">
-        <div className="flex items-center gap-4">
+    <div className="min-h-screen bg-[#050505] text-white selection:bg-primary/30">
+      <header className="fixed top-0 left-0 right-0 h-18 bg-[#09090b]/80 backdrop-blur-xl border-b border-white/5 flex items-center justify-between px-6 z-50">
+        <div className="flex items-center gap-6">
           <button 
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-2 hover:bg-[#3f3f3f] rounded-full"
+            className="p-2.5 hover:bg-white/5 rounded-xl transition-colors text-white/50 hover:text-white"
           >
-            {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
+            <Menu size={20} />
           </button>
-          <Link href="/" className="flex items-center gap-2">
-            <div className="flex items-center">
-              <PlayCircle className="text-red-600" size={28} fill="currentColor" />
-              <span className="text-lg font-semibold ml-1">Studio</span>
+          <Link href="/" className="flex items-center gap-2.5 group">
+            <div className="p-2 bg-gradient-to-tr from-primary to-brand-secondary rounded-xl shadow-lg shadow-primary/20 group-hover:scale-110 transition-transform">
+              <Sparkles className="w-5 h-5 text-white" />
             </div>
+            <span className="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-white/60">
+              VidStream Studio
+            </span>
           </Link>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-4">
           <Link 
             href="/upload"
-            className="flex items-center gap-2 px-4 py-2 bg-[#3ea6ff] text-black font-medium rounded-full hover:bg-[#65b8ff] transition-colors"
+            className="hidden sm:flex items-center gap-2.5 h-11 px-5 bg-primary hover:bg-primary/90 rounded-2xl text-white font-bold text-sm shadow-lg shadow-primary/20 transition-all hover:scale-[1.02]"
           >
-            <Upload size={18} />
-            <span className="hidden sm:inline">Create</span>
+            <Plus size={18} />
+            Initialize Broadcast
           </Link>
-          <button className="p-2 hover:bg-[#3f3f3f] rounded-full">
+          <button className="w-11 h-11 flex items-center justify-center hover:bg-white/5 rounded-2xl transition-colors text-white/40">
             <Bell size={20} />
           </button>
-          <button className="p-2 hover:bg-[#3f3f3f] rounded-full">
-            <HelpCircle size={20} />
-          </button>
-          <div className="w-8 h-8 bg-[#3ea6ff] rounded-full flex items-center justify-center text-black font-medium">
-            {user.email?.charAt(0).toUpperCase() || 'U'}
+          <div className="w-10 h-10 bg-gradient-to-tr from-primary to-indigo-600 rounded-[14px] flex items-center justify-center text-white font-bold shadow-lg shadow-primary/10 border border-white/10">
+            {user.email?.charAt(0).toUpperCase()}
           </div>
         </div>
       </header>
 
-      <aside className={`fixed left-0 top-14 bottom-0 bg-[#282828] border-r border-[#3f3f3f] transition-all duration-300 z-40 ${sidebarOpen ? 'w-56' : 'w-16'}`}>
-        <div className="p-4">
+      <aside className={`fixed left-0 top-18 bottom-0 bg-[#09090b] border-r border-white/5 transition-all duration-500 z-40 ${sidebarOpen ? 'w-64' : 'w-20'}`}>
+        <div className="p-4 flex flex-col h-full">
           {sidebarOpen && channel && (
-            <div className="mb-4 pb-4 border-b border-[#3f3f3f]">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-[#3ea6ff] rounded-full flex items-center justify-center text-black font-medium">
-                  {channel.name.charAt(0)}
+            <div className="mb-6 p-4 bg-white/5 rounded-2xl border border-white/5">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-primary/20 rounded-xl flex items-center justify-center text-primary font-bold">
+                    {channel.name.charAt(0)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-sm truncate">{channel.name}</p>
+                    <p className="text-[10px] font-bold text-primary tracking-widest uppercase mt-0.5">Verified Entity</p>
+                  </div>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium truncate">{channel.name}</p>
-                  <p className="text-xs text-white/60 truncate">{channel.handle}</p>
-                </div>
-              </div>
             </div>
           )}
 
-          <nav className="space-y-1">
+          <nav className="space-y-1.5">
             {menuItems.map(item => (
               <button
                 key={item.id}
                 onClick={() => setActiveSection(item.id)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
+                className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all relative group overflow-hidden ${
                   activeSection === item.id 
-                    ? 'bg-[#3f3f3f] text-white' 
-                    : 'text-white/70 hover:bg-[#3f3f3f]/50 hover:text-white'
+                    ? 'text-white' 
+                    : 'text-white/40 hover:text-white hover:bg-white/5'
                 }`}
               >
-                <item.icon size={20} />
-                {sidebarOpen && <span className="text-sm">{item.label}</span>}
+                {activeSection === item.id && (
+                  <motion.div layoutId="studio-active-pill" className="absolute inset-0 bg-primary shadow-lg shadow-primary/20" />
+                )}
+                <item.icon size={20} className="relative z-10" />
+                {sidebarOpen && <span className="text-sm font-semibold relative z-10">{item.label}</span>}
               </button>
             ))}
           </nav>
+          
+          <div className="mt-auto p-4 opacity-20">
+             <p className="text-[10px] font-bold tracking-[0.2em] uppercase">VidStream Neural Studio</p>
+          </div>
         </div>
       </aside>
 
-      <main className={`pt-14 transition-all duration-300 ${sidebarOpen ? 'pl-56' : 'pl-16'}`}>
-        <div className="p-6">
+      <main className={`pt-18 transition-all duration-500 min-h-screen ${sidebarOpen ? 'pl-64' : 'pl-20'}`}>
+        <div className="p-8 md:p-12 max-w-[1600px] mx-auto">
           {activeSection === 'dashboard' && (
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <h1 className="text-2xl font-semibold">Channel dashboard</h1>
-                <Link href="/upload" className="flex items-center gap-2 px-4 py-2 bg-[#3ea6ff] text-black font-medium rounded-lg hover:bg-[#65b8ff] transition-colors">
+            <div className="space-y-12">
+              <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+                <div>
+                  <div className="flex items-center gap-3 text-primary mb-3">
+                    <Zap size={20} />
+                    <span className="text-xs font-bold tracking-[0.2em] uppercase">Neural Uplink Active</span>
+                  </div>
+                  <h1 className="text-4xl font-extrabold text-white tracking-tight">System Overview</h1>
+                </div>
+                <Link href="/upload" className="h-12 px-8 bg-white/5 border border-white/10 hover:bg-white/10 rounded-2xl text-white font-bold transition-all flex items-center gap-3 shadow-xl">
                   <Upload size={18} />
-                  Upload video
+                  Manual Upload
                 </Link>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="bg-[#282828] rounded-xl p-4 border border-[#3f3f3f]">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="w-10 h-10 bg-[#3ea6ff]/20 rounded-lg flex items-center justify-center">
-                      <Eye size={20} className="text-[#3ea6ff]" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {[
+                  { label: 'Total Engagement', value: formatCount(videos.reduce((a, v) => a + v.view_count, 0)), icon: Eye, color: 'primary' },
+                  { label: 'Neural Followers', value: formatCount(channel?.subscriber_count || 0), icon: Users, color: 'brand-secondary' },
+                  { label: 'Positive Resonance', value: formatCount(videos.reduce((a, v) => a + v.like_count, 0)), icon: ThumbsUp, color: 'indigo' },
+                  { label: 'Active Signals', value: formatCount(videos.reduce((a, v) => a + v.comment_count, 0)), icon: MessageSquare, color: 'rose' }
+                ].map((stat, i) => (
+                  <motion.div 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.1 }}
+                    key={i} 
+                    className="bg-white/5 rounded-[32px] p-8 border border-white/5 shadow-2xl relative overflow-hidden group hover:border-primary/30 transition-all"
+                  >
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 blur-2xl group-hover:bg-primary/10 transition-all" />
+                    <div className="flex items-center justify-between mb-6">
+                      <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center text-white/40 group-hover:text-primary transition-all">
+                        <stat.icon size={24} />
+                      </div>
+                      <div className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-1 rounded-lg">+12.4%</div>
                     </div>
-                    <span className="text-white/60 text-sm">Total views</span>
-                  </div>
-                  <p className="text-3xl font-bold">{formatCount(totalViews)}</p>
-                  <p className="text-xs text-green-500 mt-1 flex items-center gap-1">
-                    <TrendingUp size={12} /> +12.5% from last month
-                  </p>
-                </div>
-
-                <div className="bg-[#282828] rounded-xl p-4 border border-[#3f3f3f]">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="w-10 h-10 bg-red-500/20 rounded-lg flex items-center justify-center">
-                      <Users size={20} className="text-red-500" />
-                    </div>
-                    <span className="text-white/60 text-sm">Subscribers</span>
-                  </div>
-                  <p className="text-3xl font-bold">{formatCount(channel?.subscriber_count || 0)}</p>
-                  <p className="text-xs text-green-500 mt-1 flex items-center gap-1">
-                    <TrendingUp size={12} /> +243 this week
-                  </p>
-                </div>
-
-                <div className="bg-[#282828] rounded-xl p-4 border border-[#3f3f3f]">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center">
-                      <ThumbsUp size={20} className="text-green-500" />
-                    </div>
-                    <span className="text-white/60 text-sm">Total likes</span>
-                  </div>
-                  <p className="text-3xl font-bold">{formatCount(totalLikes)}</p>
-                  <p className="text-xs text-green-500 mt-1 flex items-center gap-1">
-                    <TrendingUp size={12} /> +8.3% from last month
-                  </p>
-                </div>
-
-                <div className="bg-[#282828] rounded-xl p-4 border border-[#3f3f3f]">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="w-10 h-10 bg-yellow-500/20 rounded-lg flex items-center justify-center">
-                      <MessageSquare size={20} className="text-yellow-500" />
-                    </div>
-                    <span className="text-white/60 text-sm">Comments</span>
-                  </div>
-                  <p className="text-3xl font-bold">{formatCount(totalComments)}</p>
-                  <p className="text-xs text-green-500 mt-1 flex items-center gap-1">
-                    <TrendingUp size={12} /> +15.2% from last month
-                  </p>
-                </div>
+                    <p className="text-4xl font-black text-white mb-2">{stat.value}</p>
+                    <span className="text-xs font-bold text-white/30 uppercase tracking-widest">{stat.label}</span>
+                  </motion.div>
+                ))}
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2 bg-[#282828] rounded-xl border border-[#3f3f3f]">
-                  <div className="p-4 border-b border-[#3f3f3f] flex items-center justify-between">
-                    <h2 className="font-semibold">Latest videos</h2>
-                    <button 
-                      onClick={() => setActiveSection('content')}
-                      className="text-[#3ea6ff] text-sm hover:underline flex items-center gap-1"
-                    >
-                      View all <ChevronRight size={16} />
-                    </button>
-                  </div>
-                  <div className="p-4">
-                    {videos.length === 0 ? (
-                      <div className="text-center py-12">
-                        <Video size={48} className="mx-auto text-white/30 mb-4" />
-                        <p className="text-white/60 mb-4">No videos uploaded yet</p>
-                        <Link 
-                          href="/upload"
-                          className="inline-flex items-center gap-2 px-4 py-2 bg-[#3ea6ff] text-black font-medium rounded-lg hover:bg-[#65b8ff] transition-colors"
-                        >
-                          <Upload size={18} />
-                          Upload your first video
-                        </Link>
-                      </div>
-                    ) : (
-                      <div className="space-y-3">
-                        {videos.slice(0, 5).map(video => (
-                          <Link 
-                            key={video.id}
-                            href={`/watch?v=${video.id}`}
-                            className="flex gap-4 p-2 rounded-lg hover:bg-[#3f3f3f]/50 transition-colors"
-                          >
-                            <div className="w-32 h-18 rounded-lg overflow-hidden bg-[#3f3f3f] shrink-0">
-                              <img 
-                                src={video.thumbnail_url || 'https://picsum.photos/seed/default/160/90'} 
-                                alt={video.title}
-                                className="w-full h-full object-cover"
-                              />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <h3 className="font-medium text-sm truncate">{video.title}</h3>
-                              <div className="flex items-center gap-4 mt-1 text-xs text-white/60">
-                                <span className="flex items-center gap-1">
-                                  <Eye size={12} /> {formatCount(video.view_count)}
-                                </span>
-                                <span className="flex items-center gap-1">
-                                  <ThumbsUp size={12} /> {formatCount(video.like_count)}
-                                </span>
-                                <span className="flex items-center gap-1">
-                                  <MessageSquare size={12} /> {formatCount(video.comment_count)}
-                                </span>
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="lg:col-span-2 bg-white/5 rounded-[40px] border border-white/5 shadow-2xl overflow-hidden relative">
+                   <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 blur-[100px] -z-10" />
+                   <div className="px-8 py-6 border-b border-white/5 flex items-center justify-between">
+                     <h2 className="text-xl font-bold">Latest Transmissions</h2>
+                     <button onClick={() => setActiveSection('content')} className="text-xs font-bold text-primary hover:bg-primary/10 px-4 py-2 rounded-xl transition-all">
+                        Access All Media
+                     </button>
+                   </div>
+                   <div className="p-8">
+                      {videos.length === 0 ? (
+                        <div className="text-center py-20 bg-white/[0.02] rounded-[32px] border border-dashed border-white/5">
+                           <Play size={48} className="mx-auto text-white/10 mb-6" />
+                           <h3 className="text-lg font-bold mb-2">The Lab is Quiet</h3>
+                           <p className="text-white/30 text-sm mb-8 max-w-xs mx-auto">Initialize your first broadcast to begin populating your neural dashboard.</p>
+                           <Link href="/upload" className="px-10 py-4 bg-primary hover:bg-primary/90 rounded-2xl text-white font-bold transition-all shadow-lg shadow-primary/20">
+                             Launch Stream
+                           </Link>
+                        </div>
+                      ) : (
+                        <div className="space-y-4">
+                          {videos.slice(0, 5).map((v, idx) => (
+                            <Link key={v.id} href={`/watch?v=${v.id}`} className="flex gap-6 p-4 rounded-3xl hover:bg-white/5 transition-all group border border-transparent hover:border-white/5">
+                              <div className="w-40 h-24 rounded-2xl overflow-hidden bg-white/5 relative shrink-0">
+                                 <img src={v.thumbnail_url} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                    <Play size={20} className="fill-white" />
+                                 </div>
                               </div>
-                              <p className="text-xs text-white/40 mt-1">{formatDate(video.published_at)}</p>
-                            </div>
-                          </Link>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+                              <div className="flex-1 py-1">
+                                 <h3 className="font-bold text-lg mb-2 group-hover:text-primary transition-colors line-clamp-1">{v.title}</h3>
+                                 <div className="flex items-center gap-6 text-sm text-white/30">
+                                    <span className="flex items-center gap-1.5"><Eye size={14} /> {formatCount(v.view_count)}</span>
+                                    <span className="flex items-center gap-1.5"><ThumbsUp size={14} /> {formatCount(v.like_count)}</span>
+                                    <span className="flex items-center gap-1.5"><Clock size={14} /> {new Date(v.published_at).toLocaleDateString()}</span>
+                                 </div>
+                              </div>
+                            </Link>
+                          ))}
+                        </div>
+                      )}
+                   </div>
                 </div>
 
-                <div className="bg-[#282828] rounded-xl border border-[#3f3f3f]">
-                  <div className="p-4 border-b border-[#3f3f3f]">
-                    <h2 className="font-semibold">Quick actions</h2>
-                  </div>
-                  <div className="p-4 space-y-2">
-                    <Link 
-                      href="/upload"
-                      className="flex items-center gap-3 p-3 rounded-lg hover:bg-[#3f3f3f]/50 transition-colors"
-                    >
-                      <div className="w-10 h-10 bg-[#3ea6ff]/20 rounded-lg flex items-center justify-center">
-                        <Upload size={20} className="text-[#3ea6ff]" />
+                <div className="space-y-8">
+                   <div className="bg-white/5 rounded-[40px] border border-white/5 p-8 shadow-2xl relative overflow-hidden">
+                      <h2 className="text-xl font-bold mb-8">Neural Growth</h2>
+                      <div className="space-y-6">
+                         <div className="flex items-end gap-1.5 h-32">
+                           {[...Array(15)].map((_, i) => (
+                             <div key={i} className="flex-1 bg-primary/20 hover:bg-primary rounded-t-lg transition-all" style={{ height: `${30 + Math.random() * 70}%` }} />
+                           ))}
+                         </div>
+                         <div className="flex justify-between items-center pt-4 border-t border-white/5">
+                            <div className="text-2xl font-black">+{formatCount(1240)}</div>
+                            <div className="text-xs font-bold text-primary uppercase tracking-widest">Growth Vector</div>
+                         </div>
                       </div>
-                      <div>
-                        <p className="font-medium text-sm">Upload video</p>
-                        <p className="text-xs text-white/60">Share content with your audience</p>
+                   </div>
+
+                   <div className="bg-white/5 rounded-[40px] border border-white/5 p-8 shadow-2xl">
+                      <h2 className="text-xl font-bold mb-6">Quick Links</h2>
+                      <div className="grid grid-cols-2 gap-3">
+                         <button className="h-24 bg-white/5 hover:bg-white/10 rounded-2xl border border-white/5 transition-all flex flex-col items-center justify-center gap-2 group">
+                            <BarChart3 size={20} className="text-primary group-hover:scale-110 transition-transform" />
+                            <span className="text-[10px] font-bold uppercase tracking-widest text-white/40">Analytics</span>
+                         </button>
+                         <button className="h-24 bg-white/5 hover:bg-white/10 rounded-2xl border border-white/5 transition-all flex flex-col items-center justify-center gap-2 group">
+                            <Settings size={20} className="text-primary group-hover:scale-110 transition-transform" />
+                            <span className="text-[10px] font-bold uppercase tracking-widest text-white/40">Engine</span>
+                         </button>
+                         <button className="h-24 bg-white/5 hover:bg-white/10 rounded-2xl border border-white/5 transition-all flex flex-col items-center justify-center gap-2 group">
+                            <DollarSign size={20} className="text-primary group-hover:scale-110 transition-transform" />
+                            <span className="text-[10px] font-bold uppercase tracking-widest text-white/40">Revenue</span>
+                         </button>
+                         <button className="h-24 bg-white/5 hover:bg-white/10 rounded-2xl border border-white/5 transition-all flex flex-col items-center justify-center gap-2 group">
+                            <HelpCircle size={20} className="text-primary group-hover:scale-110 transition-transform" />
+                            <span className="text-[10px] font-bold uppercase tracking-widest text-white/40">Support</span>
+                         </button>
                       </div>
-                    </Link>
-                    <button className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-[#3f3f3f]/50 transition-colors">
-                      <div className="w-10 h-10 bg-red-500/20 rounded-lg flex items-center justify-center">
-                        <Radio size={20} className="text-red-500" />
-                      </div>
-                      <div className="text-left">
-                        <p className="font-medium text-sm">Go live</p>
-                        <p className="text-xs text-white/60">Start streaming now</p>
-                      </div>
-                    </button>
-                    <button className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-[#3f3f3f]/50 transition-colors">
-                      <div className="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center">
-                        <BarChart3 size={20} className="text-purple-500" />
-                      </div>
-                      <div className="text-left">
-                        <p className="font-medium text-sm">View analytics</p>
-                        <p className="text-xs text-white/60">Track your performance</p>
-                      </div>
-                    </button>
-                    <Link 
-                      href={`/channel/${channel?.handle}`}
-                      className="flex items-center gap-3 p-3 rounded-lg hover:bg-[#3f3f3f]/50 transition-colors"
-                    >
-                      <div className="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center">
-                        <Eye size={20} className="text-green-500" />
-                      </div>
-                      <div>
-                        <p className="font-medium text-sm">View channel</p>
-                        <p className="text-xs text-white/60">See how viewers see you</p>
-                      </div>
-                    </Link>
-                  </div>
+                   </div>
                 </div>
               </div>
             </div>
           )}
 
-          {activeSection === 'content' && (
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <h1 className="text-2xl font-semibold">Channel content</h1>
-                <Link href="/upload" className="flex items-center gap-2 px-4 py-2 bg-[#3ea6ff] text-black font-medium rounded-lg hover:bg-[#65b8ff] transition-colors">
-                  <Plus size={18} />
-                  Create
-                </Link>
-              </div>
-
-              <div className="bg-[#282828] rounded-xl border border-[#3f3f3f] overflow-hidden">
-                <div className="flex border-b border-[#3f3f3f]">
-                  <button className="px-6 py-3 text-sm font-medium border-b-2 border-[#3ea6ff] text-[#3ea6ff]">
-                    Videos
-                  </button>
-                  <button className="px-6 py-3 text-sm font-medium text-white/60 hover:text-white">
-                    Shorts
-                  </button>
-                  <button className="px-6 py-3 text-sm font-medium text-white/60 hover:text-white">
-                    Live
-                  </button>
-                </div>
-
-                {videos.length === 0 ? (
-                  <div className="text-center py-16">
-                    <Video size={64} className="mx-auto text-white/20 mb-4" />
-                    <p className="text-white/60 mb-2">No videos yet</p>
-                    <p className="text-white/40 text-sm mb-6">Upload your first video to get started</p>
-                    <Link 
-                      href="/upload"
-                      className="inline-flex items-center gap-2 px-6 py-3 bg-[#3ea6ff] text-black font-medium rounded-lg hover:bg-[#65b8ff] transition-colors"
-                    >
-                      <Upload size={18} />
-                      Upload video
-                    </Link>
-                  </div>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead className="border-b border-[#3f3f3f]">
-                        <tr className="text-left text-xs text-white/60">
-                          <th className="p-4 font-medium">Video</th>
-                          <th className="p-4 font-medium">Visibility</th>
-                          <th className="p-4 font-medium">Date</th>
-                          <th className="p-4 font-medium">Views</th>
-                          <th className="p-4 font-medium">Comments</th>
-                          <th className="p-4 font-medium">Likes</th>
-                          <th className="p-4 font-medium"></th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {videos.map(video => (
-                          <tr key={video.id} className="border-b border-[#3f3f3f] hover:bg-[#3f3f3f]/30">
-                            <td className="p-4">
-                              <Link href={`/watch?v=${video.id}`} className="flex items-center gap-4">
-                                <div className="w-28 h-16 rounded bg-[#3f3f3f] overflow-hidden shrink-0">
-                                  <img 
-                                    src={video.thumbnail_url || 'https://picsum.photos/seed/default/112/64'} 
-                                    alt={video.title}
-                                    className="w-full h-full object-cover"
-                                  />
-                                </div>
-                                <div className="min-w-0">
-                                  <p className="font-medium text-sm truncate max-w-xs">{video.title}</p>
-                                  {video.is_short && (
-                                    <span className="inline-block mt-1 px-2 py-0.5 text-xs bg-[#3f3f3f] rounded">Short</span>
-                                  )}
-                                </div>
-                              </Link>
-                            </td>
-                            <td className="p-4">
-                              <span className={`text-xs px-2 py-1 rounded ${
-                                video.is_private ? 'bg-yellow-500/20 text-yellow-500' : 'bg-green-500/20 text-green-500'
-                              }`}>
-                                {video.is_private ? 'Private' : 'Public'}
-                              </span>
-                            </td>
-                            <td className="p-4 text-sm text-white/60">{formatDate(video.published_at)}</td>
-                            <td className="p-4 text-sm">{formatCount(video.view_count)}</td>
-                            <td className="p-4 text-sm">{formatCount(video.comment_count)}</td>
-                            <td className="p-4 text-sm">{formatCount(video.like_count)}</td>
-                            <td className="p-4">
-                              <button className="p-2 hover:bg-[#3f3f3f] rounded-full">
-                                <MoreVertical size={16} />
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {activeSection === 'analytics' && (
-            <div className="space-y-6">
-              <h1 className="text-2xl font-semibold">Channel analytics</h1>
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-[#282828] rounded-xl p-6 border border-[#3f3f3f]">
-                  <h3 className="text-white/60 text-sm mb-2">Views (Last 28 days)</h3>
-                  <p className="text-3xl font-bold">{formatCount(Math.floor(totalViews * 0.3))}</p>
-                  <div className="mt-4 h-24 flex items-end gap-1">
-                    {[...Array(28)].map((_, i) => (
-                      <div 
-                        key={i}
-                        className="flex-1 bg-[#3ea6ff] rounded-t"
-                        style={{ height: `${20 + Math.random() * 80}%` }}
-                      />
-                    ))}
-                  </div>
-                </div>
-
-                <div className="bg-[#282828] rounded-xl p-6 border border-[#3f3f3f]">
-                  <h3 className="text-white/60 text-sm mb-2">Watch time (hours)</h3>
-                  <p className="text-3xl font-bold">{formatCount(Math.floor(totalViews * 0.05))}</p>
-                  <div className="mt-4 h-24 flex items-end gap-1">
-                    {[...Array(28)].map((_, i) => (
-                      <div 
-                        key={i}
-                        className="flex-1 bg-purple-500 rounded-t"
-                        style={{ height: `${20 + Math.random() * 80}%` }}
-                      />
-                    ))}
-                  </div>
-                </div>
-
-                <div className="bg-[#282828] rounded-xl p-6 border border-[#3f3f3f]">
-                  <h3 className="text-white/60 text-sm mb-2">Subscribers</h3>
-                  <p className="text-3xl font-bold">+{formatCount(Math.floor((channel?.subscriber_count || 0) * 0.02))}</p>
-                  <div className="mt-4 h-24 flex items-end gap-1">
-                    {[...Array(28)].map((_, i) => (
-                      <div 
-                        key={i}
-                        className="flex-1 bg-red-500 rounded-t"
-                        style={{ height: `${20 + Math.random() * 80}%` }}
-                      />
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-[#282828] rounded-xl border border-[#3f3f3f]">
-                <div className="p-4 border-b border-[#3f3f3f]">
-                  <h2 className="font-semibold">Top videos</h2>
-                </div>
-                <div className="p-4">
-                  {videos.slice(0, 5).map((video, i) => (
-                    <div key={video.id} className="flex items-center gap-4 py-3 border-b border-[#3f3f3f] last:border-0">
-                      <span className="text-white/40 w-6 text-center">{i + 1}</span>
-                      <div className="w-20 h-12 rounded bg-[#3f3f3f] overflow-hidden shrink-0">
-                        <img src={video.thumbnail_url} alt={video.title} className="w-full h-full object-cover" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm truncate">{video.title}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-medium">{formatCount(video.view_count)}</p>
-                        <p className="text-xs text-white/40">views</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {(activeSection === 'comments' || activeSection === 'subtitles' || activeSection === 'copyright' || activeSection === 'earn' || activeSection === 'settings') && (
-            <div className="text-center py-16">
-              <div className="w-20 h-20 bg-[#3f3f3f] rounded-full flex items-center justify-center mx-auto mb-4">
-                {activeSection === 'comments' && <MessageSquare size={40} className="text-white/40" />}
-                {activeSection === 'subtitles' && <Subtitles size={40} className="text-white/40" />}
-                {activeSection === 'copyright' && <Copyright size={40} className="text-white/40" />}
-                {activeSection === 'earn' && <DollarSign size={40} className="text-white/40" />}
-                {activeSection === 'settings' && <Settings size={40} className="text-white/40" />}
-              </div>
-              <h2 className="text-xl font-semibold capitalize mb-2">{activeSection}</h2>
-              <p className="text-white/60">This feature is coming soon</p>
+          {activeSection !== 'dashboard' && (
+            <div className="flex flex-col items-center justify-center py-40 bg-white/5 rounded-[40px] border border-white/5 border-dashed">
+               <Sparkles size={64} className="text-primary/20 mb-8" />
+               <h2 className="text-2xl font-bold">Feature Under Neural Construction</h2>
+               <p className="text-white/30 max-w-sm text-center mt-4">This section is being recalibrated for the VidStream 1.0 update. Access your dashboard for core controls.</p>
+               <button onClick={() => setActiveSection('dashboard')} className="mt-10 px-8 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl text-white font-bold transition-all">
+                  Return to Matrix
+               </button>
             </div>
           )}
         </div>
