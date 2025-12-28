@@ -216,15 +216,32 @@ function WatchContent() {
     );
   }
 
-  const videoUrl = video.video_url || 'https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4';
+    const videoUrl = video.video_url || 'https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4';
+    
+    // Check if it's a YouTube URL
+    const getYouTubeId = (url: string) => {
+      const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+      const match = url.match(regExp);
+      return (match && match[2].length === 11) ? match[2] : null;
+    };
 
-  return (
-    <div className="flex flex-col min-h-screen bg-[#f9f9f9]">
-      <Masthead />
-      <div className="pt-[56px] flex flex-col lg:flex-row gap-6 p-4 lg:p-6 max-w-[1800px] mx-auto w-full">
-        <div className="flex-1 max-w-[1280px]">
-          <div className="relative aspect-video bg-black rounded-xl overflow-hidden">
-            {video.is_live ? (
+    const youtubeId = getYouTubeId(videoUrl);
+
+    return (
+      <div className="flex flex-col min-h-screen bg-[#f9f9f9]">
+        <Masthead />
+        <div className="pt-[56px] flex flex-col lg:flex-row gap-6 p-4 lg:p-6 max-w-[1800px] mx-auto w-full">
+          <div className="flex-1 max-w-[1280px]">
+            <div className="relative aspect-video bg-black rounded-xl overflow-hidden">
+              {youtubeId ? (
+                <iframe
+                  src={`https://www.youtube.com/embed/${youtubeId}?autoplay=1`}
+                  title={video.title}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  className="w-full h-full border-0"
+                />
+              ) : video.is_live ? (
               <div className="relative w-full h-full">
                 <video
                   src={videoUrl}
