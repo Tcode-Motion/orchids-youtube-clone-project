@@ -43,7 +43,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
   if (isAuthPage) return <>{children}</>;
 
   return (
-    <div className="flex flex-col min-h-screen bg-white">
+    <div className="flex flex-col min-h-screen bg-background">
       {/* Masthead is always visible except on auth pages */}
       <Masthead onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
       
