@@ -170,9 +170,9 @@ export default function VideoFeed() {
   }
 
   return (
-    <main className="flex-1 bg-[#050505] ml-0 md:ml-20 lg:ml-20 transition-all duration-500 pt-18">
+    <main className="flex-1 bg-background transition-all duration-500 pt-18">
       {/* Categories Bar */}
-      <div className="sticky top-18 z-30 bg-[#050505]/80 backdrop-blur-xl border-b border-white/5 px-6 py-4 overflow-hidden">
+      <div className="sticky top-18 z-30 bg-background/80 backdrop-blur-xl border-b border-white/5 px-6 py-4 overflow-hidden">
         <div 
           ref={chipContainerRef}
           className="flex gap-2 overflow-x-auto no-scrollbar scroll-smooth"
