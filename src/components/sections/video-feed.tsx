@@ -150,7 +150,7 @@ export default function VideoFeed() {
 
   if (loading) {
     return (
-      <main className="flex-1 bg-[#050505] ml-0 md:ml-20 lg:ml-20 transition-all duration-500 pt-18 p-6">
+      <main className="flex-1 bg-background transition-all duration-500 pt-18 p-6">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-8">
           {[...Array(12)].map((_, i) => (
             <div key={i} className="animate-pulse">
