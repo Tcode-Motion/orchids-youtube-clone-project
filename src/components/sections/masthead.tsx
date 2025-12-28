@@ -1,11 +1,12 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Menu, Search, Mic, Video, Bell, CircleUserRound, X, Upload, Radio, Settings, HelpCircle, MessageSquare, Moon, Globe, Shield, LogOut, User, DollarSign, ArrowLeft, Sun, Keyboard } from 'lucide-react';
+import { Menu, Search, Mic, Video, Bell, CircleUserRound, X, Upload, Radio, Settings, HelpCircle, MessageSquare, Moon, Globe, Shield, LogOut, User, DollarSign, ArrowLeft, Sun, Keyboard, Sparkles, Plus } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface MastheadProps {
   onMenuClick?: () => void;
@@ -20,56 +21,56 @@ const Masthead: React.FC<MastheadProps> = ({ onMenuClick }) => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showCreateChannelModal, setShowCreateChannelModal] = useState(false);
-    const [hasChannel, setHasChannel] = useState(false);
-    const [channelHandle, setChannelHandle] = useState<string | null>(null);
-    const [showMobileSearch, setShowMobileSearch] = useState(false);
-    const [theme, setTheme] = useState('light');
+  const [hasChannel, setHasChannel] = useState(false);
+  const [channelHandle, setChannelHandle] = useState<string | null>(null);
+  const [showMobileSearch, setShowMobileSearch] = useState(false);
+  const [theme, setTheme] = useState('dark');
 
-    const userMenuRef = useRef<HTMLDivElement>(null);
-    const createMenuRef = useRef<HTMLDivElement>(null);
-    const notificationsRef = useRef<HTMLDivElement>(null);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+  const createMenuRef = useRef<HTMLDivElement>(null);
+  const notificationsRef = useRef<HTMLDivElement>(null);
 
-    useEffect(() => {
-      supabase.auth.getUser().then(async ({ data }) => {
-        setUser(data.user);
-        if (data.user) {
-          const { data: channel } = await supabase
-            .from('channels')
-            .select('id, handle')
-            .eq('user_id', data.user.id)
-            .single();
-          setHasChannel(!!channel);
-          setChannelHandle(channel?.handle || null);
+  useEffect(() => {
+    supabase.auth.getUser().then(async ({ data }) => {
+      setUser(data.user);
+      if (data.user) {
+        const { data: channel } = await supabase
+          .from('channels')
+          .select('id, handle')
+          .eq('user_id', data.user.id)
+          .single();
+        setHasChannel(!!channel);
+        setChannelHandle(channel?.handle || null);
 
-          const { data: settings } = await supabase
-            .from('user_settings')
-            .select('theme')
-            .eq('user_id', data.user.id)
-            .single();
-          if (settings?.theme) {
-            setTheme(settings.theme);
-          }
+        const { data: settings } = await supabase
+          .from('user_settings')
+          .select('theme')
+          .eq('user_id', data.user.id)
+          .single();
+        if (settings?.theme) {
+          setTheme(settings.theme);
         }
-      });
+      }
+    });
 
-      const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-        setUser(session?.user ?? null);
-        if (session?.user) {
-          const { data: channel } = await supabase
-            .from('channels')
-            .select('id, handle')
-            .eq('user_id', session.user.id)
-            .single();
-          setHasChannel(!!channel);
-          setChannelHandle(channel?.handle || null);
-        } else {
-          setHasChannel(false);
-          setChannelHandle(null);
-        }
-      });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        const { data: channel } = await supabase
+          .from('channels')
+          .select('id, handle')
+          .eq('user_id', session.user.id)
+          .single();
+        setHasChannel(!!channel);
+        setChannelHandle(channel?.handle || null);
+      } else {
+        setHasChannel(false);
+        setChannelHandle(null);
+      }
+    });
 
-      return () => subscription.unsubscribe();
-    }, []);
+    return () => subscription.unsubscribe();
+  }, []);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -128,107 +129,90 @@ const Masthead: React.FC<MastheadProps> = ({ onMenuClick }) => {
   };
 
   const notifications = [
-    { id: 1, channel: 'MrBeast', avatar: 'https://picsum.photos/seed/mrbeast/40/40', message: 'uploaded: I Gave People $1,000,000', time: '2 hours ago', thumbnail: 'https://picsum.photos/seed/vid1/120/68' },
-    { id: 2, channel: 'MKBHD', avatar: 'https://picsum.photos/seed/mkbhd/40/40', message: 'uploaded: The BEST Smartphone of 2024!', time: '5 hours ago', thumbnail: 'https://picsum.photos/seed/vid2/120/68' },
-    { id: 3, channel: 'Veritasium', avatar: 'https://picsum.photos/seed/veritasium/40/40', message: 'uploaded: The Surprising Truth About Magnets', time: '1 day ago', thumbnail: 'https://picsum.photos/seed/vid3/120/68' },
+    { id: 1, channel: 'Marques Brownlee', avatar: 'https://picsum.photos/seed/mkbhd/40/40', message: 'The Future of AI is Here', time: '2h ago', thumbnail: 'https://picsum.photos/seed/vid2/120/68' },
+    { id: 2, channel: 'Veritasium', avatar: 'https://picsum.photos/seed/veritasium/40/40', message: 'Why Gravity is Not a Force', time: '5h ago', thumbnail: 'https://picsum.photos/seed/vid3/120/68' },
   ];
 
   if (showMobileSearch) {
     return (
-      <header className="masthead fixed top-0 left-0 right-0 h-[56px] bg-white flex items-center px-2 z-[1000]">
+      <header className="fixed top-0 left-0 right-0 h-18 bg-[#050505]/95 backdrop-blur-xl flex items-center px-4 z-[1000] border-b border-white/5">
         <button 
           onClick={() => setShowMobileSearch(false)}
-          className="p-2 hover:bg-[#f2f2f2] rounded-full transition-colors"
+          className="p-2 hover:bg-white/10 rounded-full transition-colors"
         >
-          <ArrowLeft className="w-6 h-6 text-[#0f0f0f]" />
+          <ArrowLeft className="w-5 h-5 text-white" />
         </button>
-        <form onSubmit={handleSearch} className="flex flex-1 items-center mx-2">
+        <form onSubmit={handleSearch} className="flex flex-1 items-center mx-3">
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search VidStream"
+            placeholder="Search videos..."
             autoFocus
-            className="flex-1 h-10 px-4 bg-[#f2f2f2] rounded-full outline-none text-[16px] placeholder:text-[#888]"
+            className="flex-1 h-11 px-5 bg-white/5 rounded-full border border-white/10 outline-none text-[15px] focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all"
           />
         </form>
-        <button className="p-2 hover:bg-[#f2f2f2] rounded-full">
-          <Mic className="w-6 h-6 text-[#0f0f0f]" />
-        </button>
       </header>
     );
   }
 
   return (
     <>
-      <header className="masthead fixed top-0 left-0 right-0 h-[56px] bg-white flex items-center justify-between px-2 sm:px-4 z-[1000]">
-        <div className="flex items-center">
+      <header className="fixed top-0 left-0 right-0 h-18 bg-[#050505]/80 backdrop-blur-md flex items-center justify-between px-6 z-[1000] border-b border-white/5">
+        <div className="flex items-center gap-4">
           <button 
             onClick={onMenuClick}
-            className="p-2 hover:bg-[#f2f2f2] rounded-full transition-colors flex items-center justify-center"
-            aria-label="Guide"
+            className="p-2.5 hover:bg-white/5 rounded-xl transition-colors text-white/70 hover:text-white"
           >
-            <Menu className="w-6 h-6 text-[#0f0f0f]" />
+            <Menu className="w-5 h-5" />
           </button>
           
-            <Link href="/" className="flex items-center gap-1 py-[18px] px-2 sm:px-4 cursor-pointer">
-              <div className="flex items-center gap-1">
-                <div className="bg-[#cc0000] p-1 rounded-lg">
-                  <Video className="w-5 h-5 text-white fill-white" />
-                </div>
-                <span className="text-xl font-bold tracking-tighter text-[#0f0f0f] hidden sm:block">
-                  VidStream
-                </span>
-              </div>
-            </Link>
-        </div>
-
-        <div className="hidden md:flex items-center flex-1 max-w-[720px] mx-4">
-          <form onSubmit={handleSearch} className="flex flex-1 items-center">
-            <div className="flex flex-1 items-center h-10 px-4 bg-white border border-[#ccc] rounded-l-full shadow-inner focus-within:border-[#065fd4] group transition-all">
-              <div className="hidden group-focus-within:flex mr-3">
-                <Search className="w-5 h-5 text-[#606060]" />
-              </div>
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search"
-                className="w-full bg-transparent outline-none text-[16px] font-normal leading-6 text-[#0f0f0f] placeholder:text-[#888]"
-              />
-              {searchQuery && (
-                <button
-                  type="button"
-                  onClick={() => setSearchQuery('')}
-                  className="p-1 hover:bg-[#f2f2f2] rounded-full"
-                >
-                  <X className="w-5 h-5 text-[#606060]" />
-                </button>
-              )}
+          <Link href="/" className="flex items-center gap-2 group">
+            <div className="bg-gradient-to-tr from-primary to-brand-secondary p-2 rounded-xl shadow-lg shadow-primary/20 group-hover:scale-110 transition-transform duration-300">
+              <Sparkles className="w-5 h-5 text-white fill-white/20" />
             </div>
-            <button 
-              type="submit"
-              className="h-10 w-16 flex items-center justify-center bg-[#f8f8f8] border border-[#ccc] border-l-0 rounded-r-full hover:bg-[#f0f0f0] hover:shadow-sm"
-              aria-label="Search"
-            >
-              <Search className="w-5 h-5 text-[#0f0f0f]" />
-            </button>
+            <span className="text-xl font-bold tracking-tight text-white hidden sm:block bg-clip-text text-transparent bg-gradient-to-r from-white to-white/60">
+              VidStream
+            </span>
+          </Link>
+        </div>
+
+        <div className="hidden md:flex items-center flex-1 max-w-[600px] mx-8">
+          <form onSubmit={handleSearch} className="flex-1 relative group">
+            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30 group-focus-within:text-primary transition-colors">
+              <Search className="w-4 h-4" />
+            </div>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search anything..."
+              className="w-full h-11 pl-11 pr-12 bg-white/5 border border-white/10 rounded-2xl outline-none text-sm placeholder:text-white/20 focus:bg-white/[0.08] focus:border-primary/40 focus:ring-4 focus:ring-primary/10 transition-all"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-white/10 rounded-lg text-white/40"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
           </form>
-          
           <button 
-            className="h-10 w-10 ml-3 flex items-center justify-center bg-[#f2f2f2] rounded-full hover:bg-[#e5e5e5] transition-colors"
-            aria-label="Search with your voice"
+            className="w-11 h-11 ml-3 flex items-center justify-center bg-white/5 rounded-2xl border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all text-white/60 hover:text-white"
+            title="Search with voice"
           >
-            <Mic className="w-5 h-5 text-[#0f0f0f]" />
+            <Mic className="w-4 h-4" />
           </button>
         </div>
 
-        <div className="flex items-center gap-1 sm:gap-2">
+        <div className="flex items-center gap-3">
           <button 
             onClick={() => setShowMobileSearch(true)}
-            className="md:hidden p-2 hover:bg-[#f2f2f2] rounded-full transition-colors"
+            className="md:hidden p-2.5 hover:bg-white/5 rounded-xl transition-colors text-white/70"
           >
-            <Search className="w-6 h-6 text-[#0f0f0f]" />
+            <Search className="w-5 h-5" />
           </button>
 
           {user ? (
@@ -236,180 +220,164 @@ const Masthead: React.FC<MastheadProps> = ({ onMenuClick }) => {
               <div className="relative" ref={createMenuRef}>
                 <button 
                   onClick={handleCreateClick}
-                  className="p-2 hover:bg-[#f2f2f2] rounded-full transition-colors flex items-center justify-center"
-                  aria-label="Create"
+                  className="px-4 h-11 bg-primary hover:bg-primary/90 rounded-2xl transition-all flex items-center gap-2 text-white font-medium text-sm shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98]"
                 >
-                  <Video className="w-6 h-6 text-[#0f0f0f]" />
+                  <Plus className="w-4 h-4" />
+                  <span className="hidden lg:inline">Create</span>
                 </button>
                 
-                {showCreateMenu && (
-                  <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-[#e5e5e5] py-2 z-50">
-                    <button 
-                      onClick={() => { setShowUploadModal(true); setShowCreateMenu(false); }}
-                      className="flex items-center gap-4 w-full px-4 py-2.5 hover:bg-[#f2f2f2] text-left"
+                <AnimatePresence>
+                  {showCreateMenu && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                      className="absolute right-0 mt-3 w-56 bg-[#0f0f12]/95 backdrop-blur-xl border border-white/10 rounded-2xl p-2 shadow-2xl z-50"
                     >
-                      <Upload size={20} />
-                      <span className="text-sm">Upload video</span>
-                    </button>
-                    <button className="flex items-center gap-4 w-full px-4 py-2.5 hover:bg-[#f2f2f2] text-left">
-                      <Radio size={20} />
-                      <span className="text-sm">Go live</span>
-                    </button>
-                  </div>
-                )}
+                      <button 
+                        onClick={() => { setShowUploadModal(true); setShowCreateMenu(false); }}
+                        className="flex items-center gap-3 w-full px-3 py-2.5 hover:bg-white/5 rounded-xl transition-colors text-left"
+                      >
+                        <div className="w-8 h-8 rounded-lg bg-indigo-500/20 flex items-center justify-center text-indigo-400">
+                          <Upload size={18} />
+                        </div>
+                        <span className="text-sm font-medium text-white/80">Upload Video</span>
+                      </button>
+                      <button className="flex items-center gap-3 w-full px-3 py-2.5 hover:bg-white/5 rounded-xl transition-colors text-left mt-1">
+                        <div className="w-8 h-8 rounded-lg bg-rose-500/20 flex items-center justify-center text-rose-400">
+                          <Radio size={18} />
+                        </div>
+                        <span className="text-sm font-medium text-white/80">Go Live</span>
+                      </button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
               
               <div className="relative" ref={notificationsRef}>
                 <button 
                   onClick={() => setShowNotifications(!showNotifications)}
-                  className="p-2 hover:bg-[#f2f2f2] rounded-full transition-colors flex items-center justify-center relative"
-                  aria-label="Notifications"
+                  className="w-11 h-11 hover:bg-white/5 rounded-2xl transition-colors flex items-center justify-center relative border border-white/5 text-white/60 hover:text-white"
                 >
-                  <Bell className="w-6 h-6 text-[#0f0f0f]" />
-                  <span className="absolute top-0.5 right-0.5 min-w-[16px] h-4 bg-[#cc0000] text-white text-[10px] font-medium rounded-full flex items-center justify-center px-1">
-                    {notifications.length}
-                  </span>
+                  <Bell className="w-5 h-5" />
+                  {notifications.length > 0 && (
+                    <span className="absolute top-2 right-2 w-2 h-2 bg-primary rounded-full shadow-[0_0_8px_rgba(99,102,241,0.8)]" />
+                  )}
                 </button>
                 
-                {showNotifications && (
-                  <div className="absolute right-0 mt-2 w-[calc(100vw-16px)] sm:w-[480px] max-w-[480px] bg-white rounded-xl shadow-lg border border-[#e5e5e5] z-50 max-h-[80vh] overflow-hidden">
-                    <div className="px-4 py-3 border-b border-[#e5e5e5] flex items-center justify-between sticky top-0 bg-white">
-                      <h3 className="font-medium text-base">Notifications</h3>
-                      <Link href="/settings" onClick={() => setShowNotifications(false)} className="p-2 hover:bg-[#f2f2f2] rounded-full">
-                        <Settings size={20} />
-                      </Link>
-                    </div>
-                    <div className="overflow-y-auto max-h-[60vh]">
-                      {notifications.map((notif) => (
-                        <div key={notif.id} className="flex items-start gap-3 px-4 py-3 hover:bg-[#f2f2f2] cursor-pointer">
-                          <img src={notif.avatar} alt={notif.channel} className="w-10 h-10 rounded-full flex-shrink-0" />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm leading-5">
-                              <span className="font-medium">{notif.channel}</span> {notif.message}
-                            </p>
-                            <p className="text-xs text-[#606060] mt-1">{notif.time}</p>
+                <AnimatePresence>
+                  {showNotifications && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                      className="absolute right-0 mt-3 w-[360px] bg-[#0f0f12]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl z-50 overflow-hidden"
+                    >
+                      <div className="px-5 py-4 border-b border-white/5 flex items-center justify-between">
+                        <h3 className="font-semibold text-white/90">Notifications</h3>
+                        <Link href="/settings" onClick={() => setShowNotifications(false)} className="p-1.5 hover:bg-white/5 rounded-lg text-white/40 hover:text-white transition-colors">
+                          <Settings size={18} />
+                        </Link>
+                      </div>
+                      <div className="max-h-[400px] overflow-y-auto py-2">
+                        {notifications.map((notif) => (
+                          <div key={notif.id} className="flex items-start gap-4 px-5 py-3 hover:bg-white/5 transition-colors cursor-pointer group">
+                            <img src={notif.avatar} alt="" className="w-10 h-10 rounded-full border border-white/10" />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm leading-relaxed text-white/70 group-hover:text-white transition-colors">
+                                <span className="font-semibold text-white">{notif.channel}</span> uploaded: {notif.message}
+                              </p>
+                              <p className="text-xs text-white/30 mt-1">{notif.time}</p>
+                            </div>
+                            <div className="w-20 h-11 rounded-lg overflow-hidden border border-white/10">
+                              <img src={notif.thumbnail} alt="" className="w-full h-full object-cover" />
+                            </div>
                           </div>
-                          <img src={notif.thumbnail} alt="" className="w-20 h-11 rounded object-cover flex-shrink-0" />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
               
               <div className="relative" ref={userMenuRef}>
                 <button 
                   onClick={() => setShowUserMenu(!showUserMenu)}
-                  className="p-1 hover:bg-[#f2f2f2] rounded-full transition-colors flex items-center justify-center"
-                  aria-label="Account"
+                  className="p-0.5 border-2 border-primary/20 hover:border-primary/50 rounded-2xl transition-all"
                 >
-                  <div className="w-8 h-8 bg-[#ef4444] rounded-full flex items-center justify-center text-white font-medium text-sm">
+                  <div className="w-9 h-9 bg-gradient-to-tr from-primary to-indigo-600 rounded-[14px] flex items-center justify-center text-white font-bold text-sm shadow-inner">
                     {user.email?.charAt(0).toUpperCase() || 'U'}
                   </div>
                 </button>
                 
-                {showUserMenu && (
-                  <div className="absolute right-0 mt-2 w-72 sm:w-80 bg-white rounded-xl shadow-lg border border-[#e5e5e5] py-2 z-50 max-h-[80vh] overflow-y-auto">
-                    <div className="px-4 py-3 border-b border-[#e5e5e5]">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-[#ef4444] rounded-full flex items-center justify-center text-white font-medium">
-                          {user.email?.charAt(0).toUpperCase() || 'U'}
+                <AnimatePresence>
+                  {showUserMenu && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                      className="absolute right-0 mt-3 w-[280px] bg-[#0f0f12]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl z-50 py-3"
+                    >
+                      <div className="px-5 py-3 border-b border-white/5 mb-2">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-gradient-to-br from-primary to-brand-secondary rounded-xl flex items-center justify-center text-white font-bold">
+                            {user.email?.charAt(0).toUpperCase() || 'U'}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-bold text-white truncate">{user.user_metadata?.name || 'Explorer'}</p>
+                            <p className="text-xs text-white/40 truncate">{user.email}</p>
+                          </div>
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-[#0f0f0f] truncate">{user.user_metadata?.name || 'User'}</p>
-                          <p className="text-sm text-[#606060] truncate">{user.email}</p>
+                        <div className="mt-3">
+                          {hasChannel ? (
+                            <Link href={`/channel/${channelHandle?.replace('@', '')}`} onClick={() => setShowUserMenu(false)} className="inline-flex items-center text-xs font-semibold text-primary hover:text-primary-foreground hover:bg-primary/10 px-3 py-1.5 rounded-lg transition-all">
+                              Dashboard
+                            </Link>
+                          ) : (
+                            <button 
+                              onClick={() => { setShowCreateChannelModal(true); setShowUserMenu(false); }}
+                              className="text-xs font-semibold text-primary hover:bg-primary/10 px-3 py-1.5 rounded-lg transition-all"
+                            >
+                              Start Creating
+                            </button>
+                          )}
                         </div>
                       </div>
-                        {hasChannel ? (
-                          <Link href={`/channel/${channelHandle?.replace('@', '')}`} onClick={() => setShowUserMenu(false)} className="text-sm text-[#065fd4] hover:underline mt-2 block">
-                            View your channel
-                          </Link>
-                        ) : (
-                          <button 
-                            onClick={() => { setShowCreateChannelModal(true); setShowUserMenu(false); }}
-                            className="text-sm text-[#065fd4] hover:underline mt-2 block"
-                          >
-                            Create a channel
-                          </button>
-                        )}
+
+                      <div className="px-2 space-y-1">
+                        <Link href={`/channel/${channelHandle?.replace('@', '')}`} onClick={() => setShowUserMenu(false)} className="flex items-center gap-3 px-3 py-2 hover:bg-white/5 rounded-xl transition-colors text-white/70 hover:text-white">
+                          <User size={18} />
+                          <span className="text-sm font-medium">My Studio</span>
+                        </Link>
+                        <button onClick={toggleTheme} className="w-full flex items-center gap-3 px-3 py-2 hover:bg-white/5 rounded-xl transition-colors text-white/70 hover:text-white text-left">
+                          {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
+                          <span className="text-sm font-medium">Appearance</span>
+                        </button>
+                        <Link href="/settings" onClick={() => setShowUserMenu(false)} className="flex items-center gap-3 px-3 py-2 hover:bg-white/5 rounded-xl transition-colors text-white/70 hover:text-white">
+                          <Settings size={18} />
+                          <span className="text-sm font-medium">Settings</span>
+                        </Link>
+                        <div className="h-px bg-white/5 mx-3 my-2" />
+                        <button 
+                          onClick={handleSignOut}
+                          className="w-full flex items-center gap-3 px-3 py-2 hover:bg-rose-500/10 rounded-xl transition-colors text-rose-400 hover:text-rose-300 text-left"
+                        >
+                          <LogOut size={18} />
+                          <span className="text-sm font-medium">Sign Out</span>
+                        </button>
                       </div>
-                      <div className="py-1">
-                        {hasChannel ? (
-                          <Link href={`/channel/${channelHandle?.replace('@', '')}`} onClick={() => setShowUserMenu(false)} className="flex items-center gap-4 px-4 py-2.5 hover:bg-[#f2f2f2]">
-                            <User size={20} />
-                            <span className="text-sm">Your channel</span>
-                          </Link>
-                        ) : (
-                          <button 
-                            onClick={() => { setShowCreateChannelModal(true); setShowUserMenu(false); }}
-                            className="flex items-center gap-4 px-4 py-2.5 hover:bg-[#f2f2f2] w-full text-left"
-                          >
-                            <User size={20} />
-                            <span className="text-sm">Create a channel</span>
-                          </button>
-                        )}
-                      <Link href="/purchases" onClick={() => setShowUserMenu(false)} className="flex items-center gap-4 px-4 py-2.5 hover:bg-[#f2f2f2]">
-                        <DollarSign size={20} />
-                        <span className="text-sm">Purchases and memberships</span>
-                      </Link>
-                    </div>
-                    <div className="border-t border-[#e5e5e5] py-1">
-                      <button 
-                        onClick={toggleTheme}
-                        className="flex items-center gap-4 w-full px-4 py-2.5 hover:bg-[#f2f2f2] text-left"
-                      >
-                        {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
-                        <span className="text-sm">Appearance: {theme === 'light' ? 'Light' : 'Dark'}</span>
-                      </button>
-                      <button className="flex items-center gap-4 w-full px-4 py-2.5 hover:bg-[#f2f2f2] text-left">
-                        <Globe size={20} />
-                        <span className="text-sm">Language: English</span>
-                      </button>
-                      <button className="flex items-center gap-4 w-full px-4 py-2.5 hover:bg-[#f2f2f2] text-left">
-                        <Shield size={20} />
-                        <span className="text-sm">Restricted Mode: Off</span>
-                      </button>
-                      <button className="flex items-center gap-4 w-full px-4 py-2.5 hover:bg-[#f2f2f2] text-left">
-                        <Keyboard size={20} />
-                        <span className="text-sm">Keyboard shortcuts</span>
-                      </button>
-                    </div>
-                    <div className="border-t border-[#e5e5e5] py-1">
-                      <Link href="/settings" onClick={() => setShowUserMenu(false)} className="flex items-center gap-4 px-4 py-2.5 hover:bg-[#f2f2f2]">
-                        <Settings size={20} />
-                        <span className="text-sm">Settings</span>
-                      </Link>
-                    </div>
-                    <div className="border-t border-[#e5e5e5] py-1">
-                      <button className="flex items-center gap-4 w-full px-4 py-2.5 hover:bg-[#f2f2f2] text-left">
-                        <HelpCircle size={20} />
-                        <span className="text-sm">Help</span>
-                      </button>
-                      <button className="flex items-center gap-4 w-full px-4 py-2.5 hover:bg-[#f2f2f2] text-left">
-                        <MessageSquare size={20} />
-                        <span className="text-sm">Send feedback</span>
-                      </button>
-                    </div>
-                    <div className="border-t border-[#e5e5e5] py-1">
-                      <button 
-                        onClick={handleSignOut}
-                        className="flex items-center gap-4 w-full px-4 py-2.5 hover:bg-[#f2f2f2] text-left"
-                      >
-                        <LogOut size={20} />
-                        <span className="text-sm">Sign out</span>
-                      </button>
-                    </div>
-                  </div>
-                )}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             </>
           ) : (
             <Link 
               href="/auth"
-              className="flex items-center gap-1.5 px-3 sm:px-4 h-9 border border-[#cce3fc] rounded-full text-[#065fd4] font-medium text-sm hover:bg-[#def1ff] transition-colors"
+              className="px-6 h-11 bg-white/5 border border-white/10 hover:bg-white/10 rounded-2xl text-white font-semibold text-sm transition-all flex items-center gap-2 hover:scale-[1.02]"
             >
-              <CircleUserRound className="w-5 h-5" />
-              <span className="hidden sm:inline">Sign in</span>
+              <CircleUserRound className="w-4 h-4" />
+              Sign in
             </Link>
           )}
         </div>
@@ -419,19 +387,23 @@ const Masthead: React.FC<MastheadProps> = ({ onMenuClick }) => {
         <UploadModal onClose={() => setShowUploadModal(false)} />
       )}
 
-        {showCreateChannelModal && (
-          <CreateChannelModal 
-            onClose={() => setShowCreateChannelModal(false)} 
-            onSuccess={(handle) => {
-              setHasChannel(true);
-              setChannelHandle(handle);
-              setShowCreateChannelModal(false);
-            }}
-          />
-        )}
+      {showCreateChannelModal && (
+        <CreateChannelModal 
+          onClose={() => setShowCreateChannelModal(false)} 
+          onSuccess={(handle) => {
+            setHasChannel(true);
+            setChannelHandle(handle);
+            setShowCreateChannelModal(false);
+          }}
+        />
+      )}
     </>
   );
 };
+
+// ... UploadModal and CreateChannelModal remain largely same but with dark aesthetic ...
+// To save space and focus on redesign, I'll update their container classes in a separate pass if needed
+// or just ensure they use the new global styles.
 
 function UploadModal({ onClose }: { onClose: () => void }) {
   const [step, setStep] = useState<'select' | 'details'>('select');
@@ -452,30 +424,14 @@ function UploadModal({ onClose }: { onClose: () => void }) {
 
   const handleUpload = async () => {
     if (!title) return;
-    
     setUploading(true);
-    
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      setUploading(false);
-      return;
-    }
+    if (!user) return;
 
-    const { data: channel } = await supabase
-      .from('channels')
-      .select('id')
-      .eq('user_id', user.id)
-      .single();
+    const { data: channel } = await supabase.from('channels').select('id').eq('user_id', user.id).single();
+    if (!channel) return;
 
-    if (!channel) {
-      setUploading(false);
-      return;
-    }
-
-    const { data: categories } = await supabase
-      .from('categories')
-      .select('id')
-      .limit(1);
+    const { data: categories } = await supabase.from('categories').select('id').limit(1);
 
     await supabase.from('videos').insert({
       channel_id: channel.id,
@@ -483,7 +439,7 @@ function UploadModal({ onClose }: { onClose: () => void }) {
       title,
       description,
       thumbnail_url: `https://picsum.photos/seed/${Date.now()}/640/360`,
-      video_url: 'https://example.com/video.mp4',
+      video_url: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
       duration: Math.floor(Math.random() * 600) + 60,
       view_count: 0,
       like_count: 0,
@@ -497,94 +453,83 @@ function UploadModal({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[2000] p-4" onClick={onClose}>
-      <div className="bg-white rounded-xl w-full max-w-[900px] max-h-[90vh] overflow-hidden" onClick={e => e.stopPropagation()}>
-        <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-[#e5e5e5]">
-          <h2 className="text-lg sm:text-xl font-medium">Upload video</h2>
-          <button onClick={onClose} className="p-2 hover:bg-[#f2f2f2] rounded-full">
-            <X size={24} />
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[2000] p-4" onClick={onClose}>
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="bg-[#0f0f12] border border-white/10 rounded-3xl w-full max-w-[800px] shadow-2xl overflow-hidden" 
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between px-8 py-6 border-b border-white/5">
+          <h2 className="text-xl font-bold text-white">Share Your Story</h2>
+          <button onClick={onClose} className="p-2 hover:bg-white/5 rounded-xl transition-colors">
+            <X size={24} className="text-white/50 hover:text-white" />
           </button>
         </div>
 
-        <div className="p-4 sm:p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
+        <div className="p-8">
           {step === 'select' ? (
-            <div className="text-center py-8 sm:py-12">
-              <div className="w-24 h-24 sm:w-32 sm:h-32 mx-auto mb-6 bg-[#f2f2f2] rounded-full flex items-center justify-center">
-                <Upload size={40} className="text-[#606060] sm:w-12 sm:h-12" />
+            <div 
+              className="border-2 border-dashed border-white/10 rounded-3xl p-12 text-center hover:border-primary/50 transition-all cursor-pointer group"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <div className="w-20 h-20 mx-auto mb-6 bg-primary/10 rounded-2xl flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                <Upload size={32} />
               </div>
-              <p className="text-[15px] mb-2">Drag and drop video files to upload</p>
-              <p className="text-[13px] text-[#606060] mb-6">Your videos will be private until you publish them.</p>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="video/*"
-                onChange={handleFileSelect}
-                className="hidden"
-              />
-              <button 
-                onClick={() => fileInputRef.current?.click()}
-                className="px-6 py-2.5 bg-[#065fd4] text-white rounded-sm font-medium text-sm hover:bg-[#0556be]"
-              >
-                SELECT FILES
+              <h3 className="text-lg font-semibold text-white mb-2">Drag and drop videos</h3>
+              <p className="text-white/40 text-sm mb-8">Up to 2GB per file</p>
+              <input ref={fileInputRef} type="file" accept="video/*" onChange={handleFileSelect} className="hidden" />
+              <button className="px-8 py-3 bg-primary hover:bg-primary/90 rounded-2xl text-white font-bold transition-all shadow-lg shadow-primary/20">
+                Select Files
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div>
-                <h3 className="font-medium mb-4">Details</h3>
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium mb-1">Title (required)</label>
+                    <label className="text-xs font-bold text-white/40 uppercase tracking-widest mb-2 block">Title</label>
                     <input
                       type="text"
                       value={title}
                       onChange={(e) => setTitle(e.target.value)}
-                      placeholder="Add a title that describes your video"
-                      className="w-full px-3 py-2 border border-[#ccc] rounded-lg focus:outline-none focus:border-[#065fd4]"
+                      className="w-full h-12 px-4 bg-white/5 border border-white/10 rounded-xl outline-none focus:border-primary transition-all text-white"
+                      placeholder="What's your video about?"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Description</label>
+                    <label className="text-xs font-bold text-white/40 uppercase tracking-widest mb-2 block">Description</label>
                     <textarea
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
-                      placeholder="Tell viewers about your video"
                       rows={4}
-                      className="w-full px-3 py-2 border border-[#ccc] rounded-lg focus:outline-none focus:border-[#065fd4] resize-none"
+                      className="w-full p-4 bg-white/5 border border-white/10 rounded-xl outline-none focus:border-primary transition-all text-white resize-none"
+                      placeholder="Give it some context..."
                     />
                   </div>
                 </div>
-              </div>
-              <div>
-                <div className="aspect-video bg-[#f2f2f2] rounded-lg flex items-center justify-center mb-4">
-                  <Video size={48} className="text-[#606060]" />
+                <div className="aspect-video bg-white/5 rounded-2xl border border-white/10 flex flex-col items-center justify-center relative group overflow-hidden">
+                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                   <Video size={48} className="text-white/20 relative z-10" />
+                   <p className="text-xs font-medium text-white/60 mt-3 relative z-10">{selectedFile?.name}</p>
                 </div>
-                <p className="text-sm text-[#606060] truncate">
-                  File: {selectedFile?.name}
-                </p>
+              </div>
+              <div className="flex justify-end gap-3 pt-4">
+                <button onClick={() => setStep('select')} className="px-6 py-3 hover:bg-white/5 rounded-2xl text-white font-bold transition-all border border-white/5">
+                  Back
+                </button>
+                <button 
+                  onClick={handleUpload}
+                  disabled={!title || uploading}
+                  className="px-10 py-3 bg-primary hover:bg-primary/90 disabled:opacity-50 rounded-2xl text-white font-bold transition-all shadow-lg shadow-primary/20"
+                >
+                  {uploading ? 'Processing...' : 'Publish Now'}
+                </button>
               </div>
             </div>
           )}
         </div>
-
-        {step === 'details' && (
-          <div className="flex justify-end gap-2 px-4 sm:px-6 py-4 border-t border-[#e5e5e5]">
-            <button 
-              onClick={() => setStep('select')}
-              className="px-4 py-2 text-sm font-medium hover:bg-[#f2f2f2] rounded-lg"
-            >
-              Back
-            </button>
-            <button 
-              onClick={handleUpload}
-              disabled={!title || uploading}
-              className="px-6 py-2 bg-[#065fd4] text-white rounded-lg font-medium text-sm hover:bg-[#0556be] disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {uploading ? 'Publishing...' : 'Publish'}
-            </button>
-          </div>
-        )}
-      </div>
+      </motion.div>
     </div>
   );
 }
@@ -596,96 +541,80 @@ function CreateChannelModal({ onClose, onSuccess }: { onClose: () => void; onSuc
 
   const handleCreate = async () => {
     if (!name || !handle) return;
-    
     setCreating(true);
-    
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      setCreating(false);
-      return;
-    }
-
+    if (!user) return;
     const handleWithAt = handle.startsWith('@') ? handle : `@${handle}`;
     
     const { error } = await supabase.from('channels').insert({
       user_id: user.id,
       name,
       handle: handleWithAt,
-      description: '',
-      avatar_url: `https://picsum.photos/seed/${Date.now()}/100/100`,
+      avatar_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${name}`,
       subscriber_count: 0,
       video_count: 0,
       is_verified: false,
     });
 
+    if (!error) onSuccess(handleWithAt);
     setCreating(false);
-    
-    if (!error) {
-      onSuccess(handleWithAt);
-    }
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[2000] p-4" onClick={onClose}>
-      <div className="bg-white rounded-xl w-full max-w-[500px] overflow-hidden" onClick={e => e.stopPropagation()}>
-        <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-[#e5e5e5]">
-          <h2 className="text-lg sm:text-xl font-medium">Create your channel</h2>
-          <button onClick={onClose} className="p-2 hover:bg-[#f2f2f2] rounded-full">
-            <X size={24} />
-          </button>
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[2000] p-4" onClick={onClose}>
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="bg-[#0f0f12] border border-white/10 rounded-3xl w-full max-w-[480px] shadow-2xl overflow-hidden p-8" 
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="text-center mb-8">
+          <div className="w-24 h-24 mx-auto mb-4 bg-gradient-to-br from-primary to-indigo-600 rounded-3xl flex items-center justify-center text-3xl font-bold text-white shadow-xl shadow-primary/20">
+            {name ? name.charAt(0).toUpperCase() : '?'}
+          </div>
+          <h2 className="text-2xl font-bold text-white">Create Your Identity</h2>
+          <p className="text-white/40 text-sm mt-2">Set up your channel to start uploading</p>
         </div>
 
-        <div className="p-4 sm:p-6">
-          <div className="flex items-center gap-4 mb-6">
-            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-[#f2f2f2] rounded-full flex items-center justify-center text-xl sm:text-2xl font-medium text-[#606060]">
-              {name ? name.charAt(0).toUpperCase() : '?'}
-            </div>
-            <div>
-              <p className="text-sm text-[#606060]">Your channel picture</p>
-            </div>
+        <div className="space-y-4">
+          <div>
+            <label className="text-xs font-bold text-white/40 uppercase tracking-widest mb-2 block">Channel Name</label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full h-12 px-4 bg-white/5 border border-white/10 rounded-xl outline-none focus:border-primary transition-all text-white"
+              placeholder="e.g. Awesome Vlogs"
+            />
           </div>
-
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">Name</label>
+          <div>
+            <label className="text-xs font-bold text-white/40 uppercase tracking-widest mb-2 block">Unique Handle</label>
+            <div className="relative">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30">@</span>
               <input
                 type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Your channel name"
-                className="w-full px-3 py-2.5 border border-[#ccc] rounded-lg focus:outline-none focus:border-[#065fd4]"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Handle</label>
-              <input
-                type="text"
-                value={handle}
+                value={handle.replace('@', '')}
                 onChange={(e) => setHandle(e.target.value)}
-                placeholder="@yourhandle"
-                className="w-full px-3 py-2.5 border border-[#ccc] rounded-lg focus:outline-none focus:border-[#065fd4]"
+                className="w-full h-12 pl-8 pr-4 bg-white/5 border border-white/10 rounded-xl outline-none focus:border-primary transition-all text-white"
+                placeholder="handle"
               />
-              <p className="text-xs text-[#606060] mt-1">Your handle is your unique identifier on VidStream</p>
             </div>
           </div>
         </div>
 
-        <div className="flex justify-end gap-2 px-4 sm:px-6 py-4 border-t border-[#e5e5e5]">
-          <button 
-            onClick={onClose}
-            className="px-4 py-2 text-sm font-medium hover:bg-[#f2f2f2] rounded-lg"
-          >
+        <div className="flex gap-3 mt-8">
+          <button onClick={onClose} className="flex-1 h-12 hover:bg-white/5 rounded-2xl text-white font-bold transition-all border border-white/5">
             Cancel
           </button>
           <button 
             onClick={handleCreate}
             disabled={!name || !handle || creating}
-            className="px-6 py-2 bg-[#065fd4] text-white rounded-lg font-medium text-sm hover:bg-[#0556be] disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 h-12 bg-primary hover:bg-primary/90 disabled:opacity-50 rounded-2xl text-white font-bold transition-all shadow-lg shadow-primary/20"
           >
-            {creating ? 'Creating...' : 'Create channel'}
+            {creating ? 'Setting Up...' : 'Launch Channel'}
           </button>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }
