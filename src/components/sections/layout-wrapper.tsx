@@ -49,7 +49,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
         <Masthead onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
         
         <div className={cn(
-          "flex flex-1 pt-[56px]",
+          "flex flex-1 pt-18",
         )}>
           {/* Sidebar is hidden on shorts and studio page */}
           {!isShortsPage && !isStudioPage && (
