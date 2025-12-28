@@ -236,16 +236,7 @@ export default function VideoFeed() {
             </div>
           ))}
         </div>
-
-      <style jsx global>{`
-        .no-scrollbar::-webkit-scrollbar {
-          display: none;
-        }
-        .no-scrollbar {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
-      `}</style>
-    </main>
-  );
+      </main>
+    );
+  }
 }
