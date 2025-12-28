@@ -158,14 +158,14 @@ export default function StudioPage() {
           >
             <Menu size={20} />
           </button>
-          <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="p-2 bg-gradient-to-tr from-primary to-brand-secondary rounded-xl shadow-lg shadow-primary/20 group-hover:scale-110 transition-transform">
-              <Sparkles className="w-5 h-5 text-white" />
-            </div>
-            <span className="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-white/60">
-              VidStream Studio
-            </span>
-          </Link>
+            <Link href="/" className="flex items-center gap-2.5 group">
+              <div className="p-2 bg-gradient-to-tr from-primary to-brand-secondary rounded-xl shadow-lg shadow-primary/20 group-hover:scale-110 transition-transform">
+                <Sparkles className="w-5 h-5 text-white" />
+              </div>
+              <span className="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-white/60">
+                VidStream Neural Studio
+              </span>
+            </Link>
         </div>
 
         <div className="flex items-center gap-4">
