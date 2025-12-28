@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { MoreVertical, CheckCircle2 } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { MoreVertical, CheckCircle2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { supabase } from '@/lib/supabase/client';
 import type { Video, Channel, Category } from '@/lib/supabase/types';
 import Link from 'next/link';
@@ -54,6 +54,9 @@ export default function VideoFeed() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [videos, setVideos] = useState<VideoWithChannel[]>([]);
   const [loading, setLoading] = useState(true);
+  const chipContainerRef = useRef<HTMLDivElement>(null);
+  const [showLeftArrow, setShowLeftArrow] = useState(false);
+  const [showRightArrow, setShowRightArrow] = useState(true);
 
   useEffect(() => {
     async function fetchData() {
@@ -107,24 +110,44 @@ export default function VideoFeed() {
     }
   }, [activeCategory, categories]);
 
+  const handleScroll = () => {
+    if (chipContainerRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = chipContainerRef.current;
+      setShowLeftArrow(scrollLeft > 0);
+      setShowRightArrow(scrollLeft < scrollWidth - clientWidth - 10);
+    }
+  };
+
+  const scrollChips = (direction: 'left' | 'right') => {
+    if (chipContainerRef.current) {
+      const scrollAmount = 200;
+      chipContainerRef.current.scrollBy({
+        left: direction === 'left' ? -scrollAmount : scrollAmount,
+        behavior: 'smooth'
+      });
+    }
+  };
+
   const displayCategories = ['All', 'Live', ...categories.filter(c => c.name !== 'All').map(c => c.name)];
 
   if (loading) {
     return (
-      <main className="flex-1 overflow-y-auto bg-[#f9f9f9] ml-0 lg:ml-[240px] transition-all duration-300">
-        <div className="sticky top-[56px] z-40 bg-white py-3 px-6 flex items-center gap-3 border-b border-[#e5e5e5]">
-          <div className="flex gap-3 overflow-x-auto no-scrollbar">
-            {[...Array(10)].map((_, i) => (
-              <div key={i} className="h-8 w-20 bg-gray-200 rounded-lg animate-pulse" />
-            ))}
+      <main className="flex-1 overflow-y-auto bg-[#f9f9f9] ml-0 md:ml-[72px] lg:ml-[240px] pb-16 md:pb-0 transition-all duration-300">
+        <div className="sticky top-0 z-40 bg-white border-b border-[#e5e5e5]">
+          <div className="flex items-center h-14 px-4 sm:px-6">
+            <div className="flex gap-3 overflow-x-auto no-scrollbar">
+              {[...Array(10)].map((_, i) => (
+                <div key={i} className="h-8 w-20 bg-gray-200 rounded-lg animate-pulse flex-shrink-0" />
+              ))}
+            </div>
           </div>
         </div>
-        <div className="p-4 md:p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-10">
+        <div className="p-3 sm:p-4 md:p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-x-4 gap-y-6 sm:gap-y-8">
           {[...Array(12)].map((_, i) => (
             <div key={i} className="flex flex-col">
               <div className="aspect-video w-full bg-gray-200 rounded-xl animate-pulse" />
               <div className="mt-3 flex gap-3">
-                <div className="h-9 w-9 bg-gray-200 rounded-full animate-pulse" />
+                <div className="h-9 w-9 bg-gray-200 rounded-full animate-pulse flex-shrink-0" />
                 <div className="flex-1">
                   <div className="h-4 bg-gray-200 rounded animate-pulse mb-2" />
                   <div className="h-3 w-24 bg-gray-200 rounded animate-pulse" />
@@ -138,26 +161,54 @@ export default function VideoFeed() {
   }
 
   return (
-    <main className="flex-1 overflow-y-auto bg-[#f9f9f9] ml-0 lg:ml-[240px] transition-all duration-300">
-      <div className="sticky top-[56px] z-40 bg-white py-3 px-6 flex items-center gap-3 border-b border-[#e5e5e5]">
-        <div className="flex gap-3 overflow-x-auto no-scrollbar scroll-smooth">
-          {displayCategories.map((category, idx) => (
-            <button
-              key={idx}
-              onClick={() => setActiveCategory(category === 'All' ? null : category)}
-              className={`h-8 px-3 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
-                (category === 'All' && activeCategory === null) || activeCategory === category
-                  ? 'bg-[#0f0f0f] text-white' 
-                  : 'bg-[#f2f2f2] text-[#0f0f0f] hover:bg-[#e5e5e5]'
-              }`}
-            >
-              {category}
-            </button>
-          ))}
+    <main className="flex-1 overflow-y-auto bg-[#f9f9f9] ml-0 md:ml-[72px] lg:ml-[240px] pb-16 md:pb-0 transition-all duration-300">
+      <div className="sticky top-0 z-40 bg-white border-b border-[#e5e5e5]">
+        <div className="relative flex items-center h-14">
+          {showLeftArrow && (
+            <div className="absolute left-0 z-10 flex items-center h-full pl-2 pr-6 bg-gradient-to-r from-white via-white to-transparent">
+              <button 
+                onClick={() => scrollChips('left')}
+                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-[#f2f2f2] transition-colors"
+              >
+                <ChevronLeft size={20} />
+              </button>
+            </div>
+          )}
+          
+          <div 
+            ref={chipContainerRef}
+            onScroll={handleScroll}
+            className="flex gap-3 overflow-x-auto no-scrollbar scroll-smooth px-4 sm:px-6"
+          >
+            {displayCategories.map((category, idx) => (
+              <button
+                key={idx}
+                onClick={() => setActiveCategory(category === 'All' ? null : category)}
+                className={`h-8 px-3 rounded-lg text-sm font-medium whitespace-nowrap transition-colors flex-shrink-0 ${
+                  (category === 'All' && activeCategory === null) || activeCategory === category
+                    ? 'bg-[#0f0f0f] text-white' 
+                    : 'bg-[#f2f2f2] text-[#0f0f0f] hover:bg-[#e5e5e5]'
+                }`}
+              >
+                {category}
+              </button>
+            ))}
+          </div>
+
+          {showRightArrow && (
+            <div className="absolute right-0 z-10 flex items-center h-full pr-2 pl-6 bg-gradient-to-l from-white via-white to-transparent">
+              <button 
+                onClick={() => scrollChips('right')}
+                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-[#f2f2f2] transition-colors"
+              >
+                <ChevronRight size={20} />
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
-      <div className="p-4 md:p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-10">
+      <div className="p-3 sm:p-4 md:p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-x-4 gap-y-6 sm:gap-y-8">
         {videos.map((video) => (
           <Link href={`/watch?v=${video.id}`} key={video.id} className="flex flex-col cursor-pointer group">
             <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-gray-200">
@@ -165,19 +216,20 @@ export default function VideoFeed() {
                 src={video.thumbnail_url || 'https://picsum.photos/seed/default/640/360'}
                 alt={video.title}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                loading="lazy"
               />
               {video.is_live ? (
                 <div className="absolute bottom-2 left-2 flex items-center gap-1.5">
-                  <span className="bg-[#cc0000] text-white text-xs font-medium px-1.5 py-0.5 rounded-sm uppercase flex items-center gap-1">
+                  <span className="bg-[#cc0000] text-white text-[10px] sm:text-xs font-medium px-1.5 py-0.5 rounded-sm uppercase flex items-center gap-1">
                     <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
                     Live
                   </span>
-                  <span className="bg-black/70 text-white text-xs px-1.5 py-0.5 rounded-sm">
+                  <span className="bg-black/70 text-white text-[10px] sm:text-xs px-1.5 py-0.5 rounded-sm">
                     {formatViews(video.view_count)} watching
                   </span>
                 </div>
               ) : (
-                <div className="absolute bottom-2 right-2 bg-black/80 text-white text-xs font-medium px-1 py-0.5 rounded">
+                <div className="absolute bottom-2 right-2 bg-black/80 text-white text-[10px] sm:text-xs font-medium px-1 py-0.5 rounded">
                   {formatDuration(video.duration)}
                 </div>
               )}
@@ -185,26 +237,30 @@ export default function VideoFeed() {
             </div>
 
             <div className="mt-3 flex gap-3">
-              <div className="flex-shrink-0">
+              <Link href={`/channel/${video.channel?.handle}`} className="flex-shrink-0" onClick={(e) => e.stopPropagation()}>
                 <img 
                   src={video.channel?.avatar_url || 'https://picsum.photos/seed/default/36/36'}
                   alt={video.channel?.name || 'Channel'}
                   className="h-9 w-9 rounded-full object-cover"
                 />
-              </div>
+              </Link>
               <div className="flex flex-col flex-1 min-w-0 pr-6 relative">
                 <h3 className="text-sm font-medium text-[#0f0f0f] line-clamp-2 leading-5 mb-1">
                   {video.title}
                 </h3>
-                <div className="flex items-center gap-1">
-                  <span className="text-xs text-[#606060] hover:text-[#0f0f0f] transition-colors">
+                <Link 
+                  href={`/channel/${video.channel?.handle}`} 
+                  onClick={(e) => e.stopPropagation()}
+                  className="flex items-center gap-1 hover:text-[#0f0f0f] transition-colors"
+                >
+                  <span className="text-xs text-[#606060]">
                     {video.channel?.name || 'Unknown Channel'}
                   </span>
                   {video.channel?.is_verified && (
                     <CheckCircle2 size={12} className="text-[#606060]" />
                   )}
-                </div>
-                <div className="text-xs text-[#606060] flex items-center">
+                </Link>
+                <div className="text-xs text-[#606060] flex items-center flex-wrap">
                   <span>{formatViews(video.view_count)} views</span>
                   {!video.is_live && (
                     <>
@@ -214,7 +270,7 @@ export default function VideoFeed() {
                   )}
                 </div>
                 <button 
-                  onClick={(e) => e.preventDefault()}
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
                   className="absolute right-0 top-0 opacity-0 group-hover:opacity-100 p-1 hover:bg-[#e5e5e5] rounded-full transition-all"
                 >
                   <MoreVertical size={20} className="text-[#0f0f0f]" />
@@ -224,6 +280,13 @@ export default function VideoFeed() {
           </Link>
         ))}
       </div>
+
+      {videos.length === 0 && !loading && (
+        <div className="flex flex-col items-center justify-center py-20">
+          <p className="text-[#606060] text-lg">No videos found</p>
+          <p className="text-[#909090] text-sm mt-1">Try selecting a different category</p>
+        </div>
+      )}
     </main>
   );
 }
