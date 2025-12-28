@@ -26,10 +26,15 @@ import {
   Clock,
   ListPlus,
   Flag,
-  Bookmark
+  Bookmark,
+  Sparkles,
+  Eye,
+  Play,
+  Zap
 } from 'lucide-react';
 import Link from 'next/link';
 import type { User } from '@supabase/supabase-js';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface VideoWithChannel extends Video {
   channel: Channel;
@@ -58,24 +63,12 @@ function formatDuration(seconds: number): string {
 }
 
 function timeAgo(date: string): string {
-  const now = new Date();
-  const published = new Date(date);
-  const diffInSeconds = Math.floor((now.getTime() - published.getTime()) / 1000);
-  if (diffInSeconds < 60) return 'Just now';
-  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} minutes ago`;
-  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
-  if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)} days ago`;
-  if (diffInSeconds < 2592000) return `${Math.floor(diffInSeconds / 604800)} weeks ago`;
-  if (diffInSeconds < 31536000) return `${Math.floor(diffInSeconds / 2592000)} months ago`;
-  return `${Math.floor(diffInSeconds / 31536000)} years ago`;
-}
-
-function formatDate(date: string): string {
-  return new Date(date).toLocaleDateString('en-US', { 
-    month: 'short', 
-    day: 'numeric', 
-    year: 'numeric' 
-  });
+  const diff = Math.floor((new Date().getTime() - new Date(date).getTime()) / 1000);
+  if (diff < 60) return 'Just now';
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+  if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
+  return new Date(date).toLocaleDateString();
 }
 
 function WatchContent() {
@@ -162,15 +155,15 @@ function WatchContent() {
             .single();
           if (watchLaterData) setSavedToWatchLater(true);
 
-            if (videoData.channel) {
-              const { data: subData } = await supabase
-                .from('subscriptions')
-                .select('id')
-                .eq('user_id', user.id)
-                .eq('channel_id', videoData.channel.id)
-                .single();
-              if (subData) setSubscribed(true);
-            }
+          if (videoData.channel) {
+            const { data: subData } = await supabase
+              .from('subscriptions')
+              .select('id')
+              .eq('user_id', user.id)
+              .eq('channel_id', videoData.channel.id)
+              .single();
+            if (subData) setSubscribed(true);
+          }
         }
         
         const { data: related } = await supabase
@@ -199,77 +192,31 @@ function WatchContent() {
 
   const handleLike = async (isLike: boolean) => {
     if (!user || !videoId) return;
-    
     const newLiked = liked === isLike ? null : isLike;
     setLiked(newLiked);
 
     if (newLiked === null) {
       await supabase.from('video_likes').delete().eq('user_id', user.id).eq('video_id', videoId);
     } else {
-      const { data: existing } = await supabase.from('video_likes')
-          .select('id')
-          .eq('user_id', user.id)
-          .eq('video_id', videoId)
-          .single();
-        
-        if (existing) {
-          await supabase.from('video_likes')
-            .update({ is_like: newLiked })
-            .eq('id', existing.id);
-        } else {
-          await supabase.from('video_likes').insert({
-            user_id: user.id,
-            video_id: videoId,
-            is_like: newLiked
-          });
-        }
+      await supabase.from('video_likes').upsert({ user_id: user.id, video_id: videoId, is_like: newLiked });
     }
   };
 
   const handleSubscribe = async () => {
     if (!user || !video?.channel) return;
-    
     const newSubscribed = !subscribed;
     setSubscribed(newSubscribed);
 
     if (newSubscribed) {
-        await supabase.from('subscriptions').insert({
-          user_id: user.id,
-          channel_id: video.channel.id,
-          created_at: new Date().toISOString()
-        });
-      } else {
-        await supabase.from('subscriptions').delete()
-          .eq('user_id', user.id)
-          .eq('channel_id', video.channel.id);
-      }
-  };
-
-  const handleSaveToWatchLater = async () => {
-    if (!user || !videoId) return;
-    
-    if (savedToWatchLater) {
-      await supabase.from('watch_later').delete().eq('user_id', user.id).eq('video_id', videoId);
-      setSavedToWatchLater(false);
+      await supabase.from('subscriptions').insert({ user_id: user.id, channel_id: video.channel.id });
     } else {
-      await supabase.from('watch_later').insert({
-        user_id: user.id,
-        video_id: videoId,
-        created_at: new Date().toISOString()
-      });
-      setSavedToWatchLater(true);
+      await supabase.from('subscriptions').delete().eq('user_id', user.id).eq('channel_id', video.channel.id);
     }
-    setShowMoreMenu(false);
   };
 
   const handleSubmitComment = async () => {
-    if (!commentText.trim() || !videoId || !user) return;
+    if (!commentText.trim() || !videoId || !user || !userChannel) return;
     setSubmittingComment(true);
-
-    if (!userChannel) {
-      setSubmittingComment(false);
-      return;
-    }
 
     const { data: newComment } = await supabase
         .from('comments')
@@ -290,35 +237,23 @@ function WatchContent() {
     setSubmittingComment(false);
   };
 
-  const handleDownload = () => {
-    if (video?.video_url) {
-      const link = document.createElement('a');
-      link.href = video.video_url;
-      link.download = `${video.title}.mp4`;
-      link.target = '_blank';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
-  };
-
   if (loading) {
     return (
-      <div className="flex flex-col min-h-screen bg-white">
+      <div className="flex flex-col min-h-screen bg-[#050505]">
         <Masthead />
-        <div className="pt-[56px] flex flex-col lg:flex-row gap-6 p-6 max-w-[1800px] mx-auto">
+        <div className="pt-18 flex flex-col lg:flex-row gap-8 p-6 max-w-[1800px] mx-auto w-full">
           <div className="flex-1">
-            <div className="aspect-video bg-gray-200 rounded-xl animate-pulse" />
-            <div className="mt-3 h-6 bg-gray-200 rounded animate-pulse w-3/4" />
-            <div className="mt-2 h-4 bg-gray-200 rounded animate-pulse w-1/2" />
+            <div className="aspect-video bg-white/5 rounded-[32px] animate-pulse" />
+            <div className="mt-6 h-8 bg-white/5 rounded-2xl animate-pulse w-3/4" />
+            <div className="mt-4 h-16 bg-white/5 rounded-2xl animate-pulse" />
           </div>
-          <div className="w-full lg:w-[400px]">
-            {[...Array(8)].map((_, i) => (
-              <div key={i} className="flex gap-2 mb-3">
-                <div className="w-40 h-24 bg-gray-200 rounded animate-pulse" />
-                <div className="flex-1">
-                  <div className="h-4 bg-gray-200 rounded animate-pulse mb-2" />
-                  <div className="h-3 w-20 bg-gray-200 rounded animate-pulse" />
+          <div className="w-full lg:w-[400px] space-y-4">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="flex gap-4">
+                <div className="w-40 h-24 bg-white/5 rounded-2xl animate-pulse shrink-0" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 bg-white/5 rounded w-full" />
+                  <div className="h-3 bg-white/5 rounded w-1/2" />
                 </div>
               </div>
             ))}
@@ -328,369 +263,270 @@ function WatchContent() {
     );
   }
 
-  if (!video) {
-    return (
-      <div className="flex flex-col min-h-screen bg-white">
-        <Masthead />
-        <div className="pt-[56px] flex items-center justify-center flex-1">
-          <p className="text-gray-500">Video not found</p>
-        </div>
-      </div>
-    );
-  }
-
-  const videoUrl = video.video_url || 'https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4';
+  if (!video) return <div className="min-h-screen bg-[#050505] flex items-center justify-center text-white/40">Transmission Lost</div>;
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#f9f9f9]">
+    <div className="flex flex-col min-h-screen bg-[#050505]">
       <Masthead />
-      <div className="pt-[56px] flex flex-col lg:flex-row gap-6 p-4 lg:p-6 max-w-[1800px] mx-auto w-full">
-        <div className="flex-1 max-w-[1280px]">
-          <div className="relative aspect-video bg-black rounded-xl overflow-hidden">
-            {video.is_live ? (
-              <div className="relative w-full h-full">
-                <video
-                  src={videoUrl}
-                  poster={video.thumbnail_url}
-                  controls
-                  autoPlay
-                  className="w-full h-full object-contain"
-                />
-                <div className="absolute top-4 left-4 flex items-center gap-2">
-                  <span className="bg-red-600 text-white text-xs font-bold px-2 py-1 rounded flex items-center gap-1.5">
-                    <span className="w-2 h-2 bg-white rounded-full animate-pulse" />
-                    LIVE
-                  </span>
-                  <span className="bg-black/60 text-white text-xs px-2 py-1 rounded">
-                    {formatViews(video.view_count)} watching
-                  </span>
-                </div>
-              </div>
+      <div className="pt-18 flex flex-col lg:flex-row gap-8 p-4 lg:p-8 max-w-[1800px] mx-auto w-full">
+        {/* Main Player Area */}
+        <div className="flex-1 min-w-0">
+          <div className="aspect-video bg-black rounded-[40px] overflow-hidden shadow-2xl border border-white/5 relative group">
+            {video.video_url?.includes('youtube.com/embed') ? (
+              <iframe
+                src={`${video.video_url}?autoplay=1&rel=0&modestbranding=1`}
+                className="w-full h-full"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
             ) : (
               <video
-                src={videoUrl}
+                src={video.video_url || 'https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'}
                 poster={video.thumbnail_url}
                 controls
                 autoPlay
                 className="w-full h-full object-contain"
               />
             )}
+            
+            {video.is_live && (
+              <div className="absolute top-6 left-6 z-10 flex items-center gap-2">
+                <div className="bg-rose-600 text-white text-[10px] font-bold px-3 py-1 rounded-full flex items-center gap-2 shadow-lg">
+                  <span className="w-1.5 h-1.5 bg-white rounded-full animate-ping" />
+                  LIVE TRANSMISSION
+                </div>
+              </div>
+            )}
           </div>
 
-          <h1 className="mt-3 text-xl font-semibold text-[#0f0f0f] leading-7">
-            {video.title}
-          </h1>
+          <div className="mt-8">
+            <h1 className="text-2xl lg:text-3xl font-black text-white leading-tight tracking-tight mb-6">
+              {video.title}
+            </h1>
 
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-3 pb-4 border-b border-[#e5e5e5]">
-            <div className="flex items-center gap-3">
-              <Link href={`/channel/${video.channel?.handle?.replace('@', '')}`}>
-                <img 
-                  src={video.channel?.avatar_url || 'https://picsum.photos/seed/default/40/40'}
-                  alt={video.channel?.name}
-                  className="w-10 h-10 rounded-full"
-                />
-              </Link>
-              <div className="flex flex-col">
-                <div className="flex items-center gap-1">
-                  <Link href={`/channel/${video.channel?.handle?.replace('@', '')}`} className="font-medium text-[#0f0f0f] hover:underline">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-8 border-b border-white/5">
+              <div className="flex items-center gap-4">
+                <Link href={`/channel/${video.channel?.handle}`} className="relative group/avatar">
+                  <div className="absolute -inset-1 bg-gradient-to-tr from-primary to-brand-secondary rounded-2xl opacity-0 group-hover/avatar:opacity-100 transition-all blur-md" />
+                  <img 
+                    src={video.channel?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${video.channel?.id}`}
+                    alt=""
+                    className="w-14 h-14 rounded-2xl object-cover border-2 border-background relative z-10"
+                  />
+                </Link>
+                <div className="flex flex-col min-w-0">
+                  <Link href={`/channel/${video.channel?.handle}`} className="font-bold text-white hover:text-primary transition-colors flex items-center gap-1.5 text-lg">
                     {video.channel?.name}
+                    {video.channel?.is_verified && <CheckCircle2 size={16} className="text-primary" />}
                   </Link>
-                  {video.channel?.is_verified && (
-                    <CheckCircle2 size={14} className="text-[#606060]" />
-                  )}
+                  <span className="text-sm text-white/40 font-medium">
+                    {formatSubscribers(video.channel?.subscriber_count || 0)} followers
+                  </span>
                 </div>
-                <span className="text-xs text-[#606060]">
-                  {formatSubscribers(video.channel?.subscriber_count || 0)} subscribers
-                </span>
+                <button 
+                  onClick={user ? handleSubscribe : () => {}}
+                  className={`ml-4 px-8 h-12 rounded-2xl font-bold text-sm transition-all flex items-center gap-2 ${
+                    subscribed 
+                      ? 'bg-white/5 text-white/60 hover:bg-white/10' 
+                      : 'bg-primary text-white shadow-lg shadow-primary/20 hover:scale-[1.02]'
+                  }`}
+                >
+                  {subscribed ? <Check size={18} /> : <Zap size={18} />}
+                  {subscribed ? 'Following' : 'Follow'}
+                </button>
               </div>
-              <button 
-                onClick={user ? handleSubscribe : () => {}}
-                className={`ml-4 px-4 py-2 rounded-full font-medium text-sm flex items-center gap-2 transition-colors ${
-                  subscribed 
-                    ? 'bg-[#f2f2f2] text-[#0f0f0f] hover:bg-[#e5e5e5]' 
-                    : 'bg-[#0f0f0f] text-white hover:bg-[#272727]'
-                }`}
-              >
-                {subscribed && <Bell size={16} />}
-                {subscribed ? 'Subscribed' : 'Subscribe'}
-              </button>
-            </div>
 
-            <div className="flex items-center gap-2 flex-wrap">
-              <div className="flex items-center bg-[#f2f2f2] rounded-full overflow-hidden">
+              <div className="flex items-center gap-3 flex-wrap">
+                <div className="flex items-center bg-white/5 rounded-2xl overflow-hidden border border-white/5 p-1">
+                  <button 
+                    onClick={() => handleLike(true)}
+                    className={`flex items-center gap-2 px-5 h-10 hover:bg-white/5 rounded-xl transition-all ${liked === true ? 'text-primary bg-primary/10' : 'text-white/60'}`}
+                  >
+                    <ThumbsUp size={20} className={liked === true ? 'fill-primary' : ''} />
+                    <span className="font-bold text-sm">{formatViews(video.like_count + (liked === true ? 1 : 0))}</span>
+                  </button>
+                  <div className="w-px h-6 bg-white/10" />
+                  <button 
+                    onClick={() => handleLike(false)}
+                    className={`flex items-center px-5 h-10 hover:bg-white/5 rounded-xl transition-all ${liked === false ? 'text-rose-500 bg-rose-500/10' : 'text-white/60'}`}
+                  >
+                    <ThumbsDown size={20} className={liked === false ? 'fill-rose-500' : ''} />
+                  </button>
+                </div>
+                
                 <button 
-                  onClick={() => handleLike(true)}
-                  className={`flex items-center gap-2 px-4 py-2 hover:bg-[#e5e5e5] transition-colors border-r border-[#ccc] ${liked === true ? 'text-[#065fd4]' : ''}`}
+                  onClick={() => setShowShareModal(true)}
+                  className="flex items-center gap-2 px-6 h-12 bg-white/5 border border-white/5 rounded-2xl hover:bg-white/10 transition-all font-bold text-sm text-white/80"
                 >
-                  <ThumbsUp size={20} fill={liked === true ? 'currentColor' : 'none'} />
-                  <span className="font-medium text-sm">{formatViews(video.like_count + (liked === true ? 1 : 0))}</span>
+                  <Share2 size={18} />
+                  Share
                 </button>
-                <button 
-                  onClick={() => handleLike(false)}
-                  className={`flex items-center px-4 py-2 hover:bg-[#e5e5e5] transition-colors ${liked === false ? 'text-[#065fd4]' : ''}`}
-                >
-                  <ThumbsDown size={20} fill={liked === false ? 'currentColor' : 'none'} />
-                </button>
-              </div>
-              <button 
-                onClick={() => setShowShareModal(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-[#f2f2f2] rounded-full hover:bg-[#e5e5e5] transition-colors"
-              >
-                <Share2 size={20} />
-                <span className="font-medium text-sm">Share</span>
-              </button>
-              <button 
-                onClick={handleDownload}
-                className="flex items-center gap-2 px-4 py-2 bg-[#f2f2f2] rounded-full hover:bg-[#e5e5e5] transition-colors"
-              >
-                <Download size={20} />
-                <span className="font-medium text-sm">Download</span>
-              </button>
-              <div className="relative">
-                <button 
-                  onClick={() => setShowMoreMenu(!showMoreMenu)}
-                  className="p-2 bg-[#f2f2f2] rounded-full hover:bg-[#e5e5e5] transition-colors"
-                >
+                
+                <button className="p-3 bg-white/5 border border-white/5 rounded-2xl hover:bg-white/10 transition-all text-white/60">
                   <MoreHorizontal size={20} />
                 </button>
-                {showMoreMenu && (
-                  <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-xl shadow-lg border border-[#e5e5e5] py-2 z-50">
-                    <button 
-                      onClick={handleSaveToWatchLater}
-                      className="flex items-center gap-3 w-full px-4 py-2 hover:bg-[#f2f2f2] text-left"
-                    >
-                      <Clock size={20} />
-                      <span className="text-sm">{savedToWatchLater ? 'Remove from Watch later' : 'Save to Watch later'}</span>
-                    </button>
-                    <button className="flex items-center gap-3 w-full px-4 py-2 hover:bg-[#f2f2f2] text-left">
-                      <ListPlus size={20} />
-                      <span className="text-sm">Save to playlist</span>
-                    </button>
-                    <button className="flex items-center gap-3 w-full px-4 py-2 hover:bg-[#f2f2f2] text-left">
-                      <Flag size={20} />
-                      <span className="text-sm">Report</span>
-                    </button>
-                  </div>
-                )}
               </div>
             </div>
-          </div>
 
-          <div className="mt-4 bg-[#f2f2f2] rounded-xl p-3">
-            <div className="flex items-center gap-2 text-sm font-medium text-[#0f0f0f]">
-              <span>{formatViews(video.view_count)} views</span>
-              <span>&middot;</span>
-              <span>{formatDate(video.published_at)}</span>
-            </div>
-            <div className={`mt-2 text-sm text-[#0f0f0f] whitespace-pre-wrap ${!showFullDescription ? 'line-clamp-2' : ''}`}>
-              {video.description || 'No description available.'}
-            </div>
-            <button 
-              onClick={() => setShowFullDescription(!showFullDescription)}
-              className="mt-2 text-sm font-medium text-[#0f0f0f] hover:underline flex items-center gap-1"
-            >
-              {showFullDescription ? (
-                <>Show less <ChevronUp size={16} /></>
-              ) : (
-                <>Show more <ChevronDown size={16} /></>
-              )}
-            </button>
-          </div>
-
-          <div className="mt-6">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold">{formatViews(comments.length)} Comments</h2>
-              <button className="flex items-center gap-2 text-sm font-medium text-[#0f0f0f]">
-                <SortDesc size={20} />
-                Sort by
+            <div className="mt-8 bg-white/5 border border-white/5 rounded-[32px] p-6 lg:p-8 relative overflow-hidden group/desc">
+              <div className="flex items-center gap-4 text-sm font-bold text-white mb-4">
+                <div className="flex items-center gap-1.5"><Eye size={16} className="text-primary" /> {formatViews(video.view_count)} views</div>
+                <div className="w-1 h-1 bg-white/20 rounded-full" />
+                <div className="text-white/60">{new Date(video.published_at).toLocaleDateString(undefined, { dateStyle: 'long' })}</div>
+              </div>
+              <div className={`text-sm leading-relaxed text-white/70 whitespace-pre-wrap transition-all ${!showFullDescription ? 'line-clamp-3' : ''}`}>
+                {video.description || 'No neural description protocol found for this broadcast.'}
+              </div>
+              <button 
+                onClick={() => setShowFullDescription(!showFullDescription)}
+                className="mt-4 text-xs font-black text-primary uppercase tracking-[0.2em] hover:text-white transition-colors"
+              >
+                {showFullDescription ? 'Recalibrate View -' : 'Expand Uplink +'}
               </button>
             </div>
 
-            <div className="flex gap-4 mb-6">
-              <div className="w-10 h-10 bg-[#ef4444] rounded-full flex items-center justify-center text-white font-medium shrink-0">
-                {user?.email?.charAt(0).toUpperCase() || 'G'}
+            {/* Comments Section */}
+            <div className="mt-12">
+              <div className="flex items-center justify-between mb-8">
+                <h2 className="text-xl font-bold flex items-center gap-3">
+                  <MessageCircle size={24} className="text-primary" />
+                  {formatViews(comments.length)} Transmissions
+                </h2>
               </div>
-              <div className="flex-1">
-                <input
-                  type="text"
-                  value={commentText}
-                  onChange={(e) => setCommentText(e.target.value)}
-                  placeholder={user ? "Add a comment..." : "Sign in to comment"}
-                  disabled={!user}
-                  className="w-full bg-transparent border-b border-[#e5e5e5] focus:border-[#0f0f0f] outline-none pb-2 text-sm disabled:cursor-not-allowed"
-                  onKeyDown={(e) => e.key === 'Enter' && handleSubmitComment()}
-                />
-                {commentText && (
-                  <div className="flex justify-end gap-2 mt-2">
-                    <button 
-                      onClick={() => setCommentText('')}
-                      className="px-4 py-2 text-sm font-medium hover:bg-[#f2f2f2] rounded-full"
-                    >
-                      Cancel
-                    </button>
+
+              <div className="flex gap-5 mb-10">
+                <div className="w-12 h-12 bg-gradient-to-tr from-primary to-indigo-600 rounded-2xl flex items-center justify-center text-white font-bold shrink-0 shadow-lg">
+                  {user?.email?.charAt(0).toUpperCase() || 'E'}
+                </div>
+                <div className="flex-1">
+                  <textarea
+                    value={commentText}
+                    onChange={(e) => setCommentText(e.target.value)}
+                    placeholder={user ? "Initialize signal..." : "Authorization required to comment"}
+                    disabled={!user}
+                    rows={1}
+                    className="w-full bg-white/5 border-b border-white/10 focus:border-primary outline-none py-3 text-sm text-white placeholder:text-white/20 resize-none transition-all"
+                  />
+                  <div className="flex justify-end gap-3 mt-4">
+                    <button onClick={() => setCommentText('')} className="px-6 h-10 rounded-xl text-sm font-bold text-white/40 hover:text-white transition-colors">Abort</button>
                     <button 
                       onClick={handleSubmitComment}
-                      disabled={submittingComment || !userChannel}
-                      className="px-4 py-2 text-sm font-medium bg-[#065fd4] text-white rounded-full hover:bg-[#0556be] disabled:opacity-50"
+                      disabled={!commentText.trim() || submittingComment}
+                      className="px-8 h-10 bg-primary hover:bg-primary/90 disabled:opacity-50 rounded-xl text-sm font-bold text-white transition-all shadow-lg shadow-primary/20"
                     >
-                      {submittingComment ? 'Posting...' : 'Comment'}
+                      {submittingComment ? 'Sending...' : 'Transmit'}
                     </button>
                   </div>
-                )}
+                </div>
               </div>
-            </div>
 
-            <div className="space-y-4">
-              {comments.length === 0 ? (
-                <p className="text-[#606060] text-sm italic">No comments yet. Be the first to comment!</p>
-              ) : (
-                comments.map((comment) => (
-                  <div key={comment.id} className="flex gap-4">
+              <div className="space-y-8">
+                {comments.map((comment) => (
+                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} key={comment.id} className="flex gap-5 group">
                     <img 
-                      src={comment.channel?.avatar_url || 'https://picsum.photos/seed/user/40/40'}
-                      alt={comment.channel?.name || 'User'}
-                      className="w-10 h-10 rounded-full shrink-0"
+                      src={comment.channel?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${comment.id}`}
+                      alt=""
+                      className="w-12 h-12 rounded-2xl object-cover border border-white/5"
                     />
                     <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium">{comment.channel?.handle || '@user'}</span>
-                        <span className="text-xs text-[#606060]">{timeAgo(comment.created_at || new Date().toISOString())}</span>
+                      <div className="flex items-center gap-3 mb-1">
+                        <span className="text-sm font-bold text-white group-hover:text-primary transition-colors">{comment.channel?.name}</span>
+                        <span className="text-[10px] font-bold text-white/20 uppercase tracking-widest">{timeAgo(comment.created_at)}</span>
                       </div>
-                      <p className="text-sm mt-1 whitespace-pre-wrap">
+                      <p className="text-sm text-white/70 leading-relaxed mb-3">
                         {comment.content}
                       </p>
-                      <div className="flex items-center gap-4 mt-2">
-                        <button className="flex items-center gap-1 text-sm text-[#606060] hover:text-[#0f0f0f]">
-                          <ThumbsUp size={16} />
-                          <span>{comment.like_count || 0}</span>
+                      <div className="flex items-center gap-6">
+                        <button className="flex items-center gap-2 text-xs font-bold text-white/30 hover:text-primary transition-colors">
+                          <ThumbsUp size={14} /> {comment.like_count || 0}
                         </button>
-                        <button className="text-[#606060] hover:text-[#0f0f0f]">
-                          <ThumbsDown size={16} />
+                        <button className="text-xs font-bold text-white/30 hover:text-rose-500 transition-colors">
+                          <ThumbsDown size={14} />
                         </button>
-                        <button className="text-sm font-medium text-[#606060] hover:text-[#0f0f0f]">
-                          Reply
-                        </button>
+                        <button className="text-[10px] font-black text-white/20 uppercase tracking-widest hover:text-white transition-colors">Reply</button>
                       </div>
                     </div>
-                  </div>
-                ))
-              )}
+                  </motion.div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
 
-        <div className="w-full lg:w-[400px] shrink-0">
-          <div className="space-y-3">
-            {relatedVideos.map((related) => (
-              <Link 
-                key={related.id} 
-                href={`/watch?v=${related.id}`}
-                className="flex gap-2 group"
-              >
-                <div className="relative w-40 h-[90px] rounded-lg overflow-hidden bg-gray-200 shrink-0">
-                  <img 
-                    src={related.thumbnail_url || 'https://picsum.photos/seed/default/168/94'}
-                    alt={related.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                  />
-                  {related.is_live ? (
-                    <span className="absolute bottom-1 left-1 bg-[#cc0000] text-white text-[10px] font-medium px-1 rounded-sm uppercase">
-                      Live
-                    </span>
-                  ) : (
-                    <span className="absolute bottom-1 right-1 bg-black/80 text-white text-[10px] font-medium px-1 rounded">
-                      {formatDuration(related.duration)}
-                    </span>
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-sm font-medium text-[#0f0f0f] line-clamp-2 leading-5">
-                    {related.title}
-                  </h3>
-                  <div className="flex items-center gap-1 mt-1">
-                    <span className="text-xs text-[#606060]">{related.channel?.name}</span>
-                    {related.channel?.is_verified && (
-                      <CheckCircle2 size={10} className="text-[#606060]" />
-                    )}
-                  </div>
-                  <div className="text-xs text-[#606060]">
-                    {formatViews(related.view_count)} views &middot; {timeAgo(related.published_at)}
-                  </div>
-                </div>
-              </Link>
-            ))}
+        {/* Sidebar Area */}
+        <div className="w-full lg:w-[420px] space-y-6">
+          <div className="flex items-center gap-3 mb-4 text-primary">
+            <Sparkles size={20} />
+            <h3 className="text-xs font-bold uppercase tracking-[0.2em]">Neural Sync Feed</h3>
           </div>
+          {relatedVideos.map((v) => (
+            <Link key={v.id} href={`/watch?v=${v.id}`} className="flex gap-4 group">
+              <div className="relative w-44 aspect-video rounded-2xl overflow-hidden bg-white/5 shrink-0 border border-white/5 group-hover:border-primary/50 transition-all">
+                <img src={v.thumbnail_url} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                <div className="absolute bottom-2 right-2 bg-black/60 backdrop-blur-md text-[10px] font-bold px-2 py-0.5 rounded-lg text-white">
+                  {formatDuration(v.duration)}
+                </div>
+              </div>
+              <div className="flex-1 min-w-0">
+                <h4 className="text-sm font-bold text-white line-clamp-2 leading-snug group-hover:text-primary transition-colors mb-1">
+                  {v.title}
+                </h4>
+                <div className="text-[12px] font-medium text-white/40 mb-1">{v.channel?.name}</div>
+                <div className="flex items-center gap-2 text-[11px] font-bold text-white/20 uppercase tracking-wider">
+                  <span>{formatViews(v.view_count)} views</span>
+                  <div className="w-1 h-1 bg-white/10 rounded-full" />
+                  <span>{timeAgo(v.published_at)}</span>
+                </div>
+              </div>
+            </Link>
+          ))}
         </div>
       </div>
 
-      {showShareModal && (
-        <div className="fixed inset-0 bg-black/60 z-[9999] flex items-center justify-center p-4" onClick={() => setShowShareModal(false)}>
-          <div className="bg-white rounded-xl w-full max-w-md shadow-2xl" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between p-4 border-b border-[#e5e5e5]">
-              <h3 className="text-lg font-semibold">Share</h3>
-              <button onClick={() => setShowShareModal(false)} className="p-2 hover:bg-[#f2f2f2] rounded-full">
-                <X size={20} />
-              </button>
-            </div>
-            
-            <div className="p-4">
-              <div className="flex gap-4 justify-center mb-6">
-                <button 
-                  onClick={() => {
-                    const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(video.title)}&url=${encodeURIComponent(window.location.href)}`;
-                    window.parent.postMessage({ type: "OPEN_EXTERNAL_URL", data: { url } }, "*");
-                  }}
-                  className="flex flex-col items-center gap-2"
-                >
-                  <div className="w-12 h-12 bg-[#1DA1F2] rounded-full flex items-center justify-center">
-                    <Twitter size={24} className="text-white" fill="currentColor" />
-                  </div>
-                  <span className="text-xs">Twitter</span>
-                </button>
-                <button 
-                  onClick={() => {
-                    const url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`;
-                    window.parent.postMessage({ type: "OPEN_EXTERNAL_URL", data: { url } }, "*");
-                  }}
-                  className="flex flex-col items-center gap-2"
-                >
-                  <div className="w-12 h-12 bg-[#1877F2] rounded-full flex items-center justify-center">
-                    <Facebook size={24} className="text-white" fill="currentColor" />
-                  </div>
-                  <span className="text-xs">Facebook</span>
-                </button>
-                <button 
-                  onClick={() => {
-                    const url = `https://wa.me/?text=${encodeURIComponent(video.title + ' ' + window.location.href)}`;
-                    window.parent.postMessage({ type: "OPEN_EXTERNAL_URL", data: { url } }, "*");
-                  }}
-                  className="flex flex-col items-center gap-2"
-                >
-                  <div className="w-12 h-12 bg-[#25D366] rounded-full flex items-center justify-center">
-                    <MessageCircle size={24} className="text-white" fill="currentColor" />
-                  </div>
-                  <span className="text-xs">WhatsApp</span>
-                </button>
-                <button 
-                  onClick={() => {
-                    const url = `mailto:?subject=${encodeURIComponent(video.title)}&body=${encodeURIComponent('Check out this video: ' + window.location.href)}`;
-                    window.parent.postMessage({ type: "OPEN_EXTERNAL_URL", data: { url } }, "*");
-                  }}
-                  className="flex flex-col items-center gap-2"
-                >
-                  <div className="w-12 h-12 bg-[#EA4335] rounded-full flex items-center justify-center">
-                    <Mail size={24} className="text-white" />
-                  </div>
-                  <span className="text-xs">Email</span>
+      {/* Share Modal */}
+      <AnimatePresence>
+        {showShareModal && (
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[2000] flex items-center justify-center p-4" onClick={() => setShowShareModal(false)}>
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="bg-[#0f0f12] border border-white/10 rounded-[40px] w-full max-w-lg shadow-2xl p-8" 
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-8">
+                <h3 className="text-2xl font-black text-white tracking-tight">Signal Relay</h3>
+                <button onClick={() => setShowShareModal(false)} className="p-2 hover:bg-white/5 rounded-xl text-white/40">
+                  <X size={24} />
                 </button>
               </div>
+              
+              <div className="grid grid-cols-4 gap-4 mb-10">
+                {[
+                  { icon: Twitter, label: 'Twitter', color: '#1DA1F2', url: `https://twitter.com/intent/tweet?url=${window.location.href}` },
+                  { icon: Facebook, label: 'Facebook', color: '#1877F2', url: `https://www.facebook.com/sharer/sharer.php?u=${window.location.href}` },
+                  { icon: MessageCircle, label: 'WhatsApp', color: '#25D366', url: `https://wa.me/?text=${window.location.href}` },
+                  { icon: Mail, label: 'Email', color: '#EA4335', url: `mailto:?body=${window.location.href}` }
+                ].map((social, i) => (
+                  <button 
+                    key={i}
+                    onClick={() => window.parent.postMessage({ type: "OPEN_EXTERNAL_URL", data: { url: social.url } }, "*")}
+                    className="flex flex-col items-center gap-3 group"
+                  >
+                    <div className="w-14 h-14 rounded-2xl flex items-center justify-center transition-all group-hover:scale-110 shadow-lg" style={{ backgroundColor: social.color + '20', color: social.color }}>
+                      <social.icon size={24} fill={social.icon === Twitter || social.icon === Facebook ? 'currentColor' : 'none'} />
+                    </div>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-white/40 group-hover:text-white">{social.label}</span>
+                  </button>
+                ))}
+              </div>
 
-              <div className="flex items-center gap-2 bg-[#f2f2f2] rounded-lg p-2">
+              <div className="flex items-center gap-3 bg-white/5 border border-white/5 rounded-2xl p-2 pl-5">
                 <input 
                   type="text" 
-                  value={typeof window !== 'undefined' ? window.location.href : ''}
+                  value={window.location.href}
                   readOnly
-                  className="flex-1 bg-transparent text-sm outline-none px-2 truncate"
+                  className="flex-1 bg-transparent text-sm text-white/60 outline-none truncate font-medium"
                 />
                 <button 
                   onClick={() => {
@@ -698,33 +534,23 @@ function WatchContent() {
                     setCopied(true);
                     setTimeout(() => setCopied(false), 2000);
                   }}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${copied ? 'bg-green-500 text-white' : 'bg-[#065fd4] text-white hover:bg-[#0556be]'}`}
+                  className={`px-6 h-11 rounded-xl text-sm font-bold transition-all flex items-center gap-2 ${copied ? 'bg-green-500 text-white' : 'bg-primary text-white shadow-lg shadow-primary/20'}`}
                 >
-                  {copied ? (
-                    <span className="flex items-center gap-1"><Check size={16} /> Copied!</span>
-                  ) : (
-                    <span className="flex items-center gap-1"><Copy size={16} /> Copy</span>
-                  )}
+                  {copied ? <Check size={18} /> : <Copy size={18} />}
+                  {copied ? 'Linked' : 'Copy'}
                 </button>
               </div>
-            </div>
+            </motion.div>
           </div>
-        </div>
-      )}
+        )}
+      </AnimatePresence>
     </div>
   );
 }
 
 export default function WatchPage() {
   return (
-    <Suspense fallback={
-      <div className="flex flex-col min-h-screen bg-white">
-        <Masthead />
-        <div className="pt-[56px] flex items-center justify-center flex-1">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
-        </div>
-      </div>
-    }>
+    <Suspense fallback={null}>
       <WatchContent />
     </Suspense>
   );
