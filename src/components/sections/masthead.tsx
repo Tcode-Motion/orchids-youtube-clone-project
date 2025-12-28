@@ -439,7 +439,7 @@ function UploadModal({ onClose }: { onClose: () => void }) {
       title,
       description,
       thumbnail_url: `https://picsum.photos/seed/${Date.now()}/640/360`,
-      video_url: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
+        video_url: 'https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
       duration: Math.floor(Math.random() * 600) + 60,
       view_count: 0,
       like_count: 0,
