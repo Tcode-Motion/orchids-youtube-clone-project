@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, useEffect, Suspense, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
 import type { Video, Channel, Comment } from '@/lib/supabase/types';
@@ -22,7 +22,10 @@ import {
   Twitter,
   Mail,
   MessageCircle,
-  Link2
+  Link2,
+  Check,
+  Embed,
+  Send
 } from 'lucide-react';
 import Link from 'next/link';
 
