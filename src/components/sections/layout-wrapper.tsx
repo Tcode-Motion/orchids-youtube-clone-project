@@ -36,33 +36,34 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
     }
   }, [pathname]);
 
-  const isAuthPage = pathname?.startsWith('/auth');
-  const isShortsPage = pathname?.startsWith('/shorts');
-  const isWatchPage = pathname?.startsWith('/watch');
+    const isAuthPage = pathname?.startsWith('/auth');
+    const isShortsPage = pathname?.startsWith('/shorts');
+    const isWatchPage = pathname?.startsWith('/watch');
+    const isStudioPage = pathname?.startsWith('/studio');
 
-  if (isAuthPage) return <>{children}</>;
+    if (isAuthPage) return <>{children}</>;
 
-  return (
-    <div className="flex flex-col min-h-screen bg-background">
-      {/* Masthead is always visible except on auth pages */}
-      <Masthead onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
-      
-      <div className={cn(
-        "flex flex-1 pt-[56px]",
-      )}>
-        {/* Sidebar is hidden on shorts page but the wrapper should still handle it */}
-        {!isShortsPage && (
-          <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-        )}
+    return (
+      <div className="flex flex-col min-h-screen bg-background">
+        {/* Masthead is always visible except on auth pages */}
+        <Masthead onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
         
-        <main className={cn(
-          "flex-1 w-full transition-all duration-300",
-          !isShortsPage && (sidebarOpen ? "lg:pl-[240px]" : "lg:pl-[72px]"),
-          isShortsPage && "lg:pl-0" // Full width for shorts
+        <div className={cn(
+          "flex flex-1 pt-[56px]",
         )}>
-          {children}
-        </main>
-      </div>
+          {/* Sidebar is hidden on shorts and studio page */}
+          {!isShortsPage && !isStudioPage && (
+            <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+          )}
+          
+          <main className={cn(
+            "flex-1 w-full transition-all duration-300",
+            !isShortsPage && !isStudioPage && (sidebarOpen ? "lg:pl-[240px]" : "lg:pl-[72px]"),
+            (isShortsPage || isStudioPage) && "lg:pl-0" 
+          )}>
+            {children}
+          </main>
+        </div>
       
       {!isShortsPage && !isWatchPage && <MobileNav />}
     </div>
