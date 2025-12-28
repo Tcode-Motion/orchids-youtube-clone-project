@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Masthead from '@/components/sections/masthead';
 import Sidebar from '@/components/sections/sidebar';
 import { supabase } from '@/lib/supabase/client';
+import Link from 'next/link';
 import { 
   User, 
   Bell, 
@@ -15,8 +16,10 @@ import {
   ChevronRight,
   Moon,
   Sun,
-  Monitor
+  Monitor,
+  Check
 } from 'lucide-react';
+import type { User as SupabaseUser } from '@supabase/supabase-js';
 
 interface SettingsSection {
   id: string;
@@ -34,16 +37,97 @@ const sections: SettingsSection[] = [
   { id: 'language', title: 'Language and location', icon: <Globe size={20} /> },
 ];
 
+interface UserSettings {
+  theme: string;
+  autoplay: boolean;
+  restricted_mode: boolean;
+  language: string;
+  country: string;
+  notifications_subscriptions: boolean;
+  notifications_recommendations: boolean;
+  notifications_activity: boolean;
+}
+
 export default function SettingsPage() {
+  const [user, setUser] = useState<SupabaseUser | null>(null);
   const [activeSection, setActiveSection] = useState('account');
-  const [theme, setTheme] = useState('light');
-  const [autoplay, setAutoplay] = useState(true);
-  const [restrictedMode, setRestrictedMode] = useState(false);
-  const [notifications, setNotifications] = useState({
-    subscriptions: true,
-    recommendations: true,
-    activity: true
+  const [settings, setSettings] = useState<UserSettings>({
+    theme: 'light',
+    autoplay: true,
+    restricted_mode: false,
+    language: 'en',
+    country: 'US',
+    notifications_subscriptions: true,
+    notifications_recommendations: true,
+    notifications_activity: true,
   });
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    async function fetchSettings() {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+
+      if (user) {
+        const { data } = await supabase
+          .from('user_settings')
+          .select('*')
+          .eq('user_id', user.id)
+          .single();
+
+        if (data) {
+          setSettings({
+            theme: data.theme || 'light',
+            autoplay: data.autoplay ?? true,
+            restricted_mode: data.restricted_mode ?? false,
+            language: data.language || 'en',
+            country: data.country || 'US',
+            notifications_subscriptions: data.notifications_subscriptions ?? true,
+            notifications_recommendations: data.notifications_recommendations ?? true,
+            notifications_activity: data.notifications_activity ?? true,
+          });
+        }
+      }
+    }
+
+    fetchSettings();
+  }, []);
+
+  const saveSettings = async (newSettings: Partial<UserSettings>) => {
+    if (!user) return;
+    
+    setSaving(true);
+    const updatedSettings = { ...settings, ...newSettings };
+    setSettings(updatedSettings);
+
+    const { data: existing } = await supabase
+      .from('user_settings')
+      .select('id')
+      .eq('user_id', user.id)
+      .single();
+
+    if (existing) {
+      await supabase
+        .from('user_settings')
+        .update({
+          ...updatedSettings,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('user_id', user.id);
+    } else {
+      await supabase
+        .from('user_settings')
+        .insert({
+          user_id: user.id,
+          ...updatedSettings,
+        });
+    }
+
+    setSaving(false);
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
+  };
 
   return (
     <div className="flex flex-col min-h-screen bg-white">
@@ -52,7 +136,25 @@ export default function SettingsPage() {
         <Sidebar />
         <main className="flex-1 ml-0 lg:ml-[240px] bg-[#f9f9f9]">
           <div className="max-w-[1200px] mx-auto p-6">
-            <h1 className="text-2xl font-semibold text-[#0f0f0f] mb-6">Settings</h1>
+            <div className="flex items-center justify-between mb-6">
+              <h1 className="text-2xl font-semibold text-[#0f0f0f]">Settings</h1>
+              {saved && (
+                <div className="flex items-center gap-2 text-green-600 text-sm">
+                  <Check size={16} />
+                  Settings saved
+                </div>
+              )}
+            </div>
+
+            {!user && (
+              <div className="bg-white rounded-xl p-8 text-center mb-6">
+                <h2 className="text-xl font-semibold mb-2">Sign in to manage your settings</h2>
+                <p className="text-[#606060] mb-4">Your settings will be saved to your account</p>
+                <Link href="/auth" className="inline-block px-4 py-2 bg-[#065fd4] text-white rounded-full font-medium text-sm hover:bg-[#0556be]">
+                  Sign in
+                </Link>
+              </div>
+            )}
             
             <div className="flex flex-col lg:flex-row gap-6">
               <nav className="lg:w-64 shrink-0">
@@ -79,29 +181,42 @@ export default function SettingsPage() {
                 {activeSection === 'account' && (
                   <div className="space-y-6">
                     <h2 className="text-lg font-semibold">Account</h2>
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between py-4 border-b border-[#e5e5e5]">
-                        <div>
-                          <h3 className="font-medium">Your channel</h3>
-                          <p className="text-sm text-[#606060]">Manage your channel settings</p>
+                    {user ? (
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-4 p-4 bg-[#f9f9f9] rounded-lg">
+                          <div className="w-16 h-16 bg-[#ef4444] rounded-full flex items-center justify-center text-white text-2xl font-medium">
+                            {user.email?.charAt(0).toUpperCase() || 'U'}
+                          </div>
+                          <div>
+                            <p className="font-medium">{user.user_metadata?.name || 'User'}</p>
+                            <p className="text-sm text-[#606060]">{user.email}</p>
+                          </div>
                         </div>
-                        <ChevronRight size={20} className="text-[#606060]" />
-                      </div>
-                      <div className="flex items-center justify-between py-4 border-b border-[#e5e5e5]">
-                        <div>
-                          <h3 className="font-medium">Memberships</h3>
-                          <p className="text-sm text-[#606060]">View your memberships and subscriptions</p>
+                        <div className="flex items-center justify-between py-4 border-b border-[#e5e5e5]">
+                          <div>
+                            <h3 className="font-medium">Your channel</h3>
+                            <p className="text-sm text-[#606060]">Manage your channel settings</p>
+                          </div>
+                          <ChevronRight size={20} className="text-[#606060]" />
                         </div>
-                        <ChevronRight size={20} className="text-[#606060]" />
-                      </div>
-                      <div className="flex items-center justify-between py-4 border-b border-[#e5e5e5]">
-                        <div>
-                          <h3 className="font-medium">Privacy</h3>
-                          <p className="text-sm text-[#606060]">Manage your privacy settings</p>
+                        <div className="flex items-center justify-between py-4 border-b border-[#e5e5e5]">
+                          <div>
+                            <h3 className="font-medium">Memberships</h3>
+                            <p className="text-sm text-[#606060]">View your memberships and subscriptions</p>
+                          </div>
+                          <ChevronRight size={20} className="text-[#606060]" />
                         </div>
-                        <ChevronRight size={20} className="text-[#606060]" />
+                        <div className="flex items-center justify-between py-4 border-b border-[#e5e5e5]">
+                          <div>
+                            <h3 className="font-medium">Privacy</h3>
+                            <p className="text-sm text-[#606060]">Manage your privacy settings</p>
+                          </div>
+                          <ChevronRight size={20} className="text-[#606060]" />
+                        </div>
                       </div>
-                    </div>
+                    ) : (
+                      <p className="text-[#606060]">Sign in to manage your account settings</p>
+                    )}
                   </div>
                 )}
 
@@ -115,10 +230,11 @@ export default function SettingsPage() {
                           <p className="text-sm text-[#606060]">Notify me about activity from channels I'm subscribed to</p>
                         </div>
                         <button
-                          onClick={() => setNotifications(prev => ({ ...prev, subscriptions: !prev.subscriptions }))}
-                          className={`w-12 h-6 rounded-full transition-colors ${notifications.subscriptions ? 'bg-[#065fd4]' : 'bg-[#ccc]'}`}
+                          onClick={() => saveSettings({ notifications_subscriptions: !settings.notifications_subscriptions })}
+                          disabled={!user}
+                          className={`w-12 h-6 rounded-full transition-colors ${settings.notifications_subscriptions ? 'bg-[#065fd4]' : 'bg-[#ccc]'} ${!user ? 'opacity-50 cursor-not-allowed' : ''}`}
                         >
-                          <div className={`w-5 h-5 bg-white rounded-full shadow transition-transform ${notifications.subscriptions ? 'translate-x-6' : 'translate-x-0.5'}`} />
+                          <div className={`w-5 h-5 bg-white rounded-full shadow transition-transform ${settings.notifications_subscriptions ? 'translate-x-6' : 'translate-x-0.5'}`} />
                         </button>
                       </div>
                       <div className="flex items-center justify-between py-4 border-b border-[#e5e5e5]">
@@ -127,10 +243,11 @@ export default function SettingsPage() {
                           <p className="text-sm text-[#606060]">Notify me of recommended videos</p>
                         </div>
                         <button
-                          onClick={() => setNotifications(prev => ({ ...prev, recommendations: !prev.recommendations }))}
-                          className={`w-12 h-6 rounded-full transition-colors ${notifications.recommendations ? 'bg-[#065fd4]' : 'bg-[#ccc]'}`}
+                          onClick={() => saveSettings({ notifications_recommendations: !settings.notifications_recommendations })}
+                          disabled={!user}
+                          className={`w-12 h-6 rounded-full transition-colors ${settings.notifications_recommendations ? 'bg-[#065fd4]' : 'bg-[#ccc]'} ${!user ? 'opacity-50 cursor-not-allowed' : ''}`}
                         >
-                          <div className={`w-5 h-5 bg-white rounded-full shadow transition-transform ${notifications.recommendations ? 'translate-x-6' : 'translate-x-0.5'}`} />
+                          <div className={`w-5 h-5 bg-white rounded-full shadow transition-transform ${settings.notifications_recommendations ? 'translate-x-6' : 'translate-x-0.5'}`} />
                         </button>
                       </div>
                       <div className="flex items-center justify-between py-4 border-b border-[#e5e5e5]">
@@ -139,10 +256,11 @@ export default function SettingsPage() {
                           <p className="text-sm text-[#606060]">Notify me about comments and other activity</p>
                         </div>
                         <button
-                          onClick={() => setNotifications(prev => ({ ...prev, activity: !prev.activity }))}
-                          className={`w-12 h-6 rounded-full transition-colors ${notifications.activity ? 'bg-[#065fd4]' : 'bg-[#ccc]'}`}
+                          onClick={() => saveSettings({ notifications_activity: !settings.notifications_activity })}
+                          disabled={!user}
+                          className={`w-12 h-6 rounded-full transition-colors ${settings.notifications_activity ? 'bg-[#065fd4]' : 'bg-[#ccc]'} ${!user ? 'opacity-50 cursor-not-allowed' : ''}`}
                         >
-                          <div className={`w-5 h-5 bg-white rounded-full shadow transition-transform ${notifications.activity ? 'translate-x-6' : 'translate-x-0.5'}`} />
+                          <div className={`w-5 h-5 bg-white rounded-full shadow transition-transform ${settings.notifications_activity ? 'translate-x-6' : 'translate-x-0.5'}`} />
                         </button>
                       </div>
                     </div>
@@ -159,10 +277,11 @@ export default function SettingsPage() {
                           <p className="text-sm text-[#606060]">Autoplay next video</p>
                         </div>
                         <button
-                          onClick={() => setAutoplay(!autoplay)}
-                          className={`w-12 h-6 rounded-full transition-colors ${autoplay ? 'bg-[#065fd4]' : 'bg-[#ccc]'}`}
+                          onClick={() => saveSettings({ autoplay: !settings.autoplay })}
+                          disabled={!user}
+                          className={`w-12 h-6 rounded-full transition-colors ${settings.autoplay ? 'bg-[#065fd4]' : 'bg-[#ccc]'} ${!user ? 'opacity-50 cursor-not-allowed' : ''}`}
                         >
-                          <div className={`w-5 h-5 bg-white rounded-full shadow transition-transform ${autoplay ? 'translate-x-6' : 'translate-x-0.5'}`} />
+                          <div className={`w-5 h-5 bg-white rounded-full shadow transition-transform ${settings.autoplay ? 'translate-x-6' : 'translate-x-0.5'}`} />
                         </button>
                       </div>
                       <div className="py-4 border-b border-[#e5e5e5]">
@@ -188,10 +307,11 @@ export default function SettingsPage() {
                           <p className="text-sm text-[#606060]">Hide potentially mature videos</p>
                         </div>
                         <button
-                          onClick={() => setRestrictedMode(!restrictedMode)}
-                          className={`w-12 h-6 rounded-full transition-colors ${restrictedMode ? 'bg-[#065fd4]' : 'bg-[#ccc]'}`}
+                          onClick={() => saveSettings({ restricted_mode: !settings.restricted_mode })}
+                          disabled={!user}
+                          className={`w-12 h-6 rounded-full transition-colors ${settings.restricted_mode ? 'bg-[#065fd4]' : 'bg-[#ccc]'} ${!user ? 'opacity-50 cursor-not-allowed' : ''}`}
                         >
-                          <div className={`w-5 h-5 bg-white rounded-full shadow transition-transform ${restrictedMode ? 'translate-x-6' : 'translate-x-0.5'}`} />
+                          <div className={`w-5 h-5 bg-white rounded-full shadow transition-transform ${settings.restricted_mode ? 'translate-x-6' : 'translate-x-0.5'}`} />
                         </button>
                       </div>
                       <div className="flex items-center justify-between py-4 border-b border-[#e5e5e5]">
@@ -211,22 +331,25 @@ export default function SettingsPage() {
                     <p className="text-sm text-[#606060]">Adjust the appearance of YouTube across this browser</p>
                     <div className="grid grid-cols-3 gap-4 mt-4">
                       <button
-                        onClick={() => setTheme('light')}
-                        className={`p-4 rounded-xl border-2 transition-colors ${theme === 'light' ? 'border-[#065fd4] bg-[#e8f0fe]' : 'border-[#e5e5e5] hover:bg-[#f2f2f2]'}`}
+                        onClick={() => saveSettings({ theme: 'light' })}
+                        disabled={!user}
+                        className={`p-4 rounded-xl border-2 transition-colors ${settings.theme === 'light' ? 'border-[#065fd4] bg-[#e8f0fe]' : 'border-[#e5e5e5] hover:bg-[#f2f2f2]'} ${!user ? 'opacity-50 cursor-not-allowed' : ''}`}
                       >
                         <Sun size={24} className="mx-auto mb-2" />
                         <span className="text-sm font-medium">Light</span>
                       </button>
                       <button
-                        onClick={() => setTheme('dark')}
-                        className={`p-4 rounded-xl border-2 transition-colors ${theme === 'dark' ? 'border-[#065fd4] bg-[#e8f0fe]' : 'border-[#e5e5e5] hover:bg-[#f2f2f2]'}`}
+                        onClick={() => saveSettings({ theme: 'dark' })}
+                        disabled={!user}
+                        className={`p-4 rounded-xl border-2 transition-colors ${settings.theme === 'dark' ? 'border-[#065fd4] bg-[#e8f0fe]' : 'border-[#e5e5e5] hover:bg-[#f2f2f2]'} ${!user ? 'opacity-50 cursor-not-allowed' : ''}`}
                       >
                         <Moon size={24} className="mx-auto mb-2" />
                         <span className="text-sm font-medium">Dark</span>
                       </button>
                       <button
-                        onClick={() => setTheme('system')}
-                        className={`p-4 rounded-xl border-2 transition-colors ${theme === 'system' ? 'border-[#065fd4] bg-[#e8f0fe]' : 'border-[#e5e5e5] hover:bg-[#f2f2f2]'}`}
+                        onClick={() => saveSettings({ theme: 'system' })}
+                        disabled={!user}
+                        className={`p-4 rounded-xl border-2 transition-colors ${settings.theme === 'system' ? 'border-[#065fd4] bg-[#e8f0fe]' : 'border-[#e5e5e5] hover:bg-[#f2f2f2]'} ${!user ? 'opacity-50 cursor-not-allowed' : ''}`}
                       >
                         <Monitor size={24} className="mx-auto mb-2" />
                         <span className="text-sm font-medium">System</span>
@@ -241,28 +364,38 @@ export default function SettingsPage() {
                     <div className="space-y-4">
                       <div className="py-4 border-b border-[#e5e5e5]">
                         <h3 className="font-medium mb-2">Language</h3>
-                        <select className="w-full px-4 py-2 border border-[#e5e5e5] rounded-lg bg-white text-sm">
-                          <option>English (US)</option>
-                          <option>English (UK)</option>
-                          <option>Spanish</option>
-                          <option>French</option>
-                          <option>German</option>
-                          <option>Japanese</option>
-                          <option>Korean</option>
-                          <option>Chinese (Simplified)</option>
+                        <select 
+                          value={settings.language}
+                          onChange={(e) => saveSettings({ language: e.target.value })}
+                          disabled={!user}
+                          className={`w-full px-4 py-2 border border-[#e5e5e5] rounded-lg bg-white text-sm ${!user ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        >
+                          <option value="en">English (US)</option>
+                          <option value="en-gb">English (UK)</option>
+                          <option value="es">Spanish</option>
+                          <option value="fr">French</option>
+                          <option value="de">German</option>
+                          <option value="ja">Japanese</option>
+                          <option value="ko">Korean</option>
+                          <option value="zh">Chinese (Simplified)</option>
                         </select>
                       </div>
                       <div className="py-4 border-b border-[#e5e5e5]">
                         <h3 className="font-medium mb-2">Location</h3>
-                        <select className="w-full px-4 py-2 border border-[#e5e5e5] rounded-lg bg-white text-sm">
-                          <option>United States</option>
-                          <option>United Kingdom</option>
-                          <option>Canada</option>
-                          <option>Australia</option>
-                          <option>Germany</option>
-                          <option>France</option>
-                          <option>Japan</option>
-                          <option>India</option>
+                        <select 
+                          value={settings.country}
+                          onChange={(e) => saveSettings({ country: e.target.value })}
+                          disabled={!user}
+                          className={`w-full px-4 py-2 border border-[#e5e5e5] rounded-lg bg-white text-sm ${!user ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        >
+                          <option value="US">United States</option>
+                          <option value="GB">United Kingdom</option>
+                          <option value="CA">Canada</option>
+                          <option value="AU">Australia</option>
+                          <option value="DE">Germany</option>
+                          <option value="FR">France</option>
+                          <option value="JP">Japan</option>
+                          <option value="IN">India</option>
                         </select>
                       </div>
                     </div>
