@@ -108,8 +108,9 @@ export default function HistoryPage() {
   }
 
   return (
-    <div className="bg-[#f9f9f9] min-h-screen">
-      <div className="max-w-[1096px] mx-auto px-6 py-6">
+    <LayoutWrapper>
+      <div className="bg-[#f9f9f9] min-h-[calc(100vh-56px)]">
+        <div className="max-w-[1096px] mx-auto px-6 py-6">
         <div className="flex flex-col lg:flex-row gap-8">
           <div className="flex-1">
             <h1 className="text-2xl font-bold mb-6">Watch history</h1>
