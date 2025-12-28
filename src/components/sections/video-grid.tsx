@@ -1,13 +1,11 @@
+"use client";
+
 import React from 'react';
-import Image from 'next/image';
 
 const VideoGrid = () => {
-  // Mock data for the video recommendation grid to demonstrate the layout
-  // In a real application, this would come from an API
   const videos = Array.from({ length: 12 }).map((_, i) => ({
     id: i,
     title: "Video Title " + (i + 1),
-    thumbnail: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/test-clones/5bf2a976-9a8b-4285-99e3-d8c2d732fe3c-youtube-com/assets/images/images_1.png",
     channel: "Channel Name",
     views: "1.2M views",
     timestamp: "2 hours ago",
