@@ -272,15 +272,16 @@ function WatchContent() {
     }
 
     const { data: newComment } = await supabase
-      .from('comments')
-      .insert({
-        video_id: videoId,
-        channel_id: userChannel.id,
-        content: commentText.trim(),
-        like_count: 0
-      })
-      .select(`*, channel:channels(*)`)
-      .single();
+        .from('comments')
+        .insert({
+          video_id: videoId,
+          user_id: user.id,
+          channel_id: userChannel.id,
+          content: commentText.trim(),
+          like_count: 0
+        })
+        .select(`*, channel:channels(*)`)
+        .single();
 
     if (newComment) {
       setComments([newComment as (Comment & { channel: Channel }), ...comments]);
