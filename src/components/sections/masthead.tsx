@@ -1,7 +1,6 @@
 "use client";
 
 import React from 'react';
-import Image from 'next/image';
 import { Menu, Search, Mic, MoreVertical, CircleUserRound } from 'lucide-react';
 
 /**
