@@ -156,7 +156,7 @@ export default function SettingsPage() {
   );
 
   return (
-    <main className="flex-1 bg-[#050505] ml-0 md:ml-20 transition-all duration-500 pt-18 min-h-screen">
+    <main className="flex-1 bg-background transition-all duration-500 pt-18 min-h-screen">
       <div className="max-w-6xl mx-auto px-6 py-12">
         <header className="mb-12 flex items-end justify-between">
           <div>
