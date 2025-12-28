@@ -393,7 +393,67 @@ export default function SettingsPage() {
                 </div>
               )}
 
-            {activeSection === 'language' && (
+              {activeSection === 'billing' && (
+                <div className="space-y-6">
+                  <h2 className="text-lg font-semibold">Billing and payments</h2>
+                  <div className="space-y-4">
+                    <div className="p-4 bg-[#f9f9f9] rounded-xl border border-[#e5e5e5]">
+                      <div className="flex items-center gap-3 mb-4">
+                        <CreditCard size={24} className="text-[#065fd4]" />
+                        <h3 className="font-medium">Payment methods</h3>
+                      </div>
+                      <p className="text-sm text-[#606060] mb-4">Add a payment method to buy movies, premium subscriptions, and support creators.</p>
+                      <button className="text-[#065fd4] text-sm font-medium hover:underline">Add payment method</button>
+                    </div>
+                    <div className="flex items-center justify-between py-4 border-b border-[#e5e5e5]">
+                      <div>
+                        <h3 className="font-medium">Quick Purchase</h3>
+                        <p className="text-sm text-[#606060]">Authorize purchases without entering your password</p>
+                      </div>
+                      <button className="w-12 h-6 rounded-full bg-[#ccc]">
+                        <div className="w-5 h-5 bg-white rounded-full shadow translate-x-0.5" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {activeSection === 'advanced' && (
+                <div className="space-y-6">
+                  <h2 className="text-lg font-semibold">Advanced settings</h2>
+                  <div className="space-y-4">
+                    <div className="py-4 border-b border-[#e5e5e5]">
+                      <h3 className="font-medium">User ID</h3>
+                      <div className="flex items-center gap-2 mt-2">
+                        <input 
+                          type="text" 
+                          readOnly 
+                          value={user?.id || 'Not signed in'} 
+                          className="flex-1 px-4 py-2 bg-[#f9f9f9] border border-[#e5e5e5] rounded-lg text-sm font-mono"
+                        />
+                        <button className="px-4 py-2 text-[#065fd4] text-sm font-medium">Copy</button>
+                      </div>
+                    </div>
+                    <div className="py-4 border-b border-[#e5e5e5]">
+                      <h3 className="font-medium">Channel ID</h3>
+                      <div className="flex items-center gap-2 mt-2">
+                        <input 
+                          type="text" 
+                          readOnly 
+                          value="UC-X0V6n6n6n6n6n6n6n6n6n" 
+                          className="flex-1 px-4 py-2 bg-[#f9f9f9] border border-[#e5e5e5] rounded-lg text-sm font-mono"
+                        />
+                        <button className="px-4 py-2 text-[#065fd4] text-sm font-medium">Copy</button>
+                      </div>
+                    </div>
+                    <div className="pt-4">
+                      <button className="text-[#cc0000] text-sm font-medium hover:underline">Delete channel</button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {activeSection === 'language' && (
               <div className="space-y-6">
                 <h2 className="text-lg font-semibold">Language and location</h2>
                 <div className="space-y-4">
