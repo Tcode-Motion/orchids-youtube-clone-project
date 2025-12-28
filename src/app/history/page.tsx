@@ -211,16 +211,17 @@ export default function HistoryPage() {
                 </button>
               </div>
 
-              <div className="mt-6 pt-6 border-t border-[#e5e5e5]">
-                <h3 className="font-medium mb-4">Manage all history</h3>
-                <p className="text-xs text-[#606060]">
-                  Your VidStream watch history controls what videos are recommended to you.
-                </p>
+                <div className="mt-6 pt-6 border-t border-[#e5e5e5]">
+                  <h3 className="font-medium mb-4">Manage all history</h3>
+                  <p className="text-xs text-[#606060]">
+                    Your VidStream watch history controls what videos are recommended to you.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </LayoutWrapper>
   );
 }
