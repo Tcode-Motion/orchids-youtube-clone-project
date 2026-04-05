@@ -6,8 +6,12 @@ import Script from "next/script";
 import LayoutWrapper from "@/components/sections/layout-wrapper";
 
 export const metadata: Metadata = {
-  title: "VidStream",
+  title: "VidStrim",
   description: "A high-performance video streaming platform built with Next.js and Supabase",
+  icons: {
+    icon: "/logo.png",
+    apple: "/logo.png",
+  },
 };
 
 export default function RootLayout({

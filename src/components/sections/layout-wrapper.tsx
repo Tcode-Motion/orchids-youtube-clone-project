@@ -49,7 +49,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
         {!isStudioPage && <Masthead onMenuClick={() => setSidebarOpen(!sidebarOpen)} />}
         
         <div className={cn(
-          "flex flex-1 pt-18",
+          "flex flex-1 pt-16",
           isStudioPage && "pt-0" // Studio handles its own padding/header
         )}>
           {/* Sidebar is hidden on shorts, watch, and studio page */}
@@ -58,9 +58,9 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
           )}
           
           <main className={cn(
-            "flex-1 w-full transition-all duration-300",
-            !isShortsPage && !isStudioPage && !isWatchPage && (sidebarOpen ? "lg:pl-[240px]" : "lg:pl-[72px]"),
-            (isShortsPage || isStudioPage || isWatchPage) && "lg:pl-0" 
+            "flex-1 w-full min-h-screen",
+            !isShortsPage && !isStudioPage && !isWatchPage && (sidebarOpen ? "md:pl-64" : "md:pl-0"),
+            (isShortsPage || isStudioPage || isWatchPage) && "md:pl-0" 
           )}>
             {children}
           </main>
